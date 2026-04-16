@@ -1,4 +1,6 @@
-<x-app-layout>
+@extends('layouts.main')
+
+@section('content')
 
 <style>
 body {
@@ -110,6 +112,17 @@ body {
             </div>
 
             <div class="input-group">
+                <label>Kategori</label>
+                <select name="kategori">
+                    @foreach($kategoriOptions as $kategori)
+                    <option value="{{ $kategori }}" {{ $kajian->kategori == $kategori ? 'selected' : '' }}>
+                        {{ $kategori }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="input-group">
                 <label>Ustadz</label>
                 <select name="ustadz_id">
                     @foreach($ustadz as $u)
@@ -164,6 +177,11 @@ body {
                 <input type="text" name="image" value="{{ $kajian->image }}">
             </div>
 
+            <div class="input-group">
+                <label>Deskripsi Singkat</label>
+                <input type="text" name="deskripsi" value="{{ $kajian->deskripsi }}">
+            </div>
+
             <button type="submit" class="btn">💾 Update Kajian</button>
 
         </form>
@@ -176,4 +194,4 @@ body {
 
 </div>
 
-</x-app-layout>
+@endsection

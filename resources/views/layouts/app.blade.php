@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ config('app.name', 'Al-Hasanah App') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -16,10 +15,8 @@
     <style>
         body {
             margin: 0;
-            /* Menggunakan Plus Jakarta Sans sebagai font utama */
             font-family: 'Plus Jakarta Sans', sans-serif;
             background: #f4f6f9;
-            color: #333;
         }
 
         .wrapper {
@@ -29,55 +26,56 @@
 
         /* SIDEBAR */
         .sidebar {
-            width: 260px; /* Sedikit diperlebar agar font bernafas */
+            width: 260px;
             background: #0b3d2e;
             color: white;
-            padding: 30px 20px;
+            padding: 25px 15px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 4px 0px 10px rgba(0,0,0,0.1);
+            overflow-y: auto;
         }
 
         .sidebar h2 {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 30px;
+            font-size: 20px;
+            margin-bottom: 25px;
             padding-left: 10px;
         }
 
-        /* MENU LINK STYLING */
+        /* MENU */
         .menu-link {
             display: flex;
             align-items: center;
             padding: 12px 15px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             border-radius: 10px;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255,255,255,0.8);
             text-decoration: none;
-            font-weight: 500; /* Medium weight untuk kesan elegan */
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            transition: 0.3s;
         }
 
         .menu-link:hover {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            transform: translateX(5px); /* Efek geser sedikit saat hover */
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            transform: translateX(5px);
         }
 
-        /* Memberikan warna berbeda untuk icon emoji agar tetap kontras */
         .menu-link span {
-            margin-right: 12px;
+            margin-right: 10px;
         }
 
-        /* USER SECTION */
+        /* ACTIVE MENU */
+        .menu-link.active {
+            background: #198754;
+            color: #fff;
+        }
+
+        /* USER */
         .user-section {
-            padding: 20px;
-            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            background: rgba(0,0,0,0.25);
             border-radius: 12px;
-            font-size: 0.9rem;
         }
 
         .user-name {
@@ -90,24 +88,21 @@
         .btn-logout {
             width: 100%;
             background: #e74c3c;
-            color: white;
             border: none;
             padding: 8px;
             border-radius: 8px;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-weight: 600;
+            color: white;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
         .btn-logout:hover {
             background: #c0392b;
         }
 
+        /* MAIN */
         .main {
             flex: 1;
-            padding: 40px;
-            overflow-y: auto;
+            padding: 30px;
         }
     </style>
 </head>
@@ -116,19 +111,60 @@
 
 <div class="wrapper">
 
+    <!-- SIDEBAR -->
     <div class="sidebar">
 
         <div>
-            <h2 style="color:#ffd700;">🕌 Al-Hasanah App</h2>
+            <h2 style="color:#ffd700;">🕌 Al-Hasanah</h2>
 
             <nav>
-                <a href="/dashboard" class="menu-link"><span>📊</span> Dashboard</a>
-                <a href="/kajian" class="menu-link"><span>📚</span> Kajian</a>
-                <a href="/rekomendasi" class="menu-link"><span>🎯</span> Rekomendasi</a>
-                <a href="/dkm" class="menu-link"><span>👥</span> Anggota DKM</a>
+                <a href="/dashboard" class="menu-link {{ request()->is('dashboard') ? 'active' : '' }}">
+                    <span>📊</span> Dashboard
+                </a>
+
+                <a href="/kajian" class="menu-link {{ request()->is('kajian*') ? 'active' : '' }}">
+                    <span>📚</span> Kajian
+                </a>
+
+                <a href="/rekomendasi" class="menu-link {{ request()->is('rekomendasi') ? 'active' : '' }}">
+                    <span>🎯</span> Rekomendasi
+                </a>
+
+                <a href="/pengumuman" class="menu-link {{ request()->is('pengumuman*') ? 'active' : '' }}">
+                    <span>📢</span> Pengumuman
+                </a>
+
+                <a href="/donasi" class="menu-link {{ request()->is('donasi*') ? 'active' : '' }}">
+                    <span>🧾</span> Donasi
+                </a>
+
+                <a href="/dkm" class="menu-link {{ request()->is('dkm*') ? 'active' : '' }}">
+                    <span>👥</span> Anggota DKM
+                </a>
+
+                <a href="/struktur-organisasi" class="menu-link {{ request()->is('struktur-organisasi') ? 'active' : '' }}">
+                    <span>🏛️</span> Struktur
+                </a>
+
+                <a href="/jadwal-kajian" class="menu-link {{ request()->is('jadwal-kajian') ? 'active' : '' }}">
+                    <span>🗓️</span> Jadwal Kajian
+                </a>
+
+                <a href="/kontak" class="menu-link {{ request()->is('kontak') ? 'active' : '' }}">
+                    <span>📞</span> Kontak
+                </a>
+
+                <a href="/faq" class="menu-link {{ request()->is('faq') ? 'active' : '' }}">
+                    <span>❓</span> FAQ
+                </a>
+
+                <a href="/tentang" class="menu-link {{ request()->is('tentang') ? 'active' : '' }}">
+                    <span>ℹ️</span> Tentang Kami
+                </a>
             </nav>
         </div>
 
+        <!-- USER -->
         <div class="user-section">
             <span class="user-name">👤 {{ auth()->user()->name }}</span>
 
@@ -142,8 +178,9 @@
 
     </div>
 
+    <!-- MAIN CONTENT -->
     <main class="main">
-        {{ $slot }}
+        @yield('content')
     </main>
 
 </div>

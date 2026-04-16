@@ -186,6 +186,15 @@
             <label>Judul</label>
             <input type="text" name="judul" placeholder="Masukkan judul kajian" required>
 
+            <label>Kategori</label>
+            <select name="kategori" required>
+                @foreach($kategoriOptions as $kategori)
+                    <option value="{{ $kategori }}" {{ old('kategori') === $kategori ? 'selected' : '' }}>
+                        {{ $kategori }}
+                    </option>
+                @endforeach
+            </select>
+
             <label>Ustadz</label>
             <select name="ustadz_id">
                 @foreach($ustadz as $u)
@@ -217,6 +226,9 @@
 
             <label>Link Gambar</label>
             <input type="text" name="image" placeholder="https://...">
+
+            <label>Deskripsi Singkat</label>
+            <input type="text" name="deskripsi" placeholder="Ringkasan tema kajian">
 
             <button type="submit" class="btn">Simpan Kajian</button>
 

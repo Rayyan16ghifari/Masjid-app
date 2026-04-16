@@ -8,13 +8,16 @@ class Kajian extends Model
 {
     protected $fillable = [
         'judul',
+        'kategori',
         'ustadz_id',
         'kitab_id',
         'hari',
         'pekan',
         'waktu',
         'lokasi',
-        'deskripsi'
+        'deskripsi',
+        'image',
+        'youtube_url'
     ];
 
     // Relasi ke ustadz
