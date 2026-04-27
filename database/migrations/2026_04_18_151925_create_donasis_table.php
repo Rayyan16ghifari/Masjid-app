@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('donasis', function (Blueprint $table) {
+        Schema::create('donasi', function (Blueprint $table) {
         $table->id();
         $table->foreignId('user_id')->constrained()->onDelete('cascade');
         $table->integer('nominal');
-        $table->string('jenis'); // zakat, infaq, sedekah
-        $table->string('status')->default('pending'); // pending, sukses
-        $table->string('metode')->nullable(); // transfer / midtrans
+        $table->string('jenis'); // zakat / infaq / sedekah
+        $table->string('status')->default('pending');
+        $table->string('metode')->nullable();
         $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('donasis');
+        Schema::dropIfExists('donasi');
     }
 };

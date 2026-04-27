@@ -1,8 +1,10 @@
-@extends('layouts.main')
+@extends('layouts.app')
+
+@section('title', 'Beranda - Al-Hasanah App')
 
 @section('content')
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
 * { box-sizing: border-box; }
 
@@ -33,119 +35,234 @@
 .orb1 { width:500px; height:500px; background:rgba(29,158,117,0.12); top:-120px; left:-100px; }
 .orb2 { width:400px; height:400px; background:rgba(8,80,65,0.20);    bottom:-80px; right:-60px; }
 .orb3 { width:300px; height:300px; background:rgba(255,215,0,0.05);  top:40%; left:50%; }
-.db { position: relative; z-index: 1; padding: 36px 32px; }
+.db { position: relative; z-index: 1; padding: 0 32px 36px; }
 
-/* ══ HERO ══ */
-.hero {
-    border-radius: 24px;
-    overflow: hidden;
+/* ══ HERO FULL-IMAGE (baru) ══ */
+.hero-full {
     position: relative;
-    /* Tinggi diperbesar agar foto masjid tidak terpotong */
-    height: 400px;
-    margin-bottom: 40px;
-    border: 1px solid rgba(29,158,117,0.3);
+    width: calc(100% + 64px);
+    margin-left: -32px;
+    height: 100vh;
+    min-height: 640px;
+    max-height: 900px;
+    overflow: hidden;
+    margin-bottom: 64px;
 }
-.hero-photo {
+
+.hero-full__img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* Geser ke bawah sedikit agar bangunan masjid terlihat penuh */
-    object-position: center 55%;
-    display: block;
+    object-position: center 30%;
+    transform: scale(1.04);
+    transition: transform 12s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    filter: brightness(0.78) saturate(0.9);
 }
-/* Overlay kiri gelap → kanan transparan */
-.hero-overlay-dark {
-    position: absolute; inset: 0;
-    background: linear-gradient(
-        100deg,
-        rgba(3,14,8,  0.95) 0%,
-        rgba(5,38,22, 0.88) 32%,
-        rgba(8,65,42, 0.68) 55%,
-        rgba(10,80,52,0.28) 75%,
-        rgba(10,80,52,0.05) 100%
-    );
+
+.hero-full:hover .hero-full__img {
+    transform: scale(1.08);
 }
-/* Gradasi bawah supaya foto melebur ke konten */
-.hero-overlay-bottom {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 90px;
-    background: linear-gradient(transparent, rgba(3,14,8,0.5));
+
+.hero-full__veil {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(105deg,
+            rgba(4,20,12,0.92) 0%,
+            rgba(4,20,12,0.72) 38%,
+            rgba(4,20,12,0.28) 65%,
+            transparent 100%
+        ),
+        linear-gradient(180deg,
+            rgba(4,20,12,0.15) 0%,
+            transparent 40%,
+            rgba(4,20,12,0.55) 85%,
+            rgba(4,20,12,0.82) 100%
+        );
 }
-.hero-shimmer {
-    position: absolute; inset: 0;
-    background-image:
-        radial-gradient(circle at 12% 88%, rgba(255,215,0,0.06) 0%, transparent 35%),
-        radial-gradient(circle at 88% 12%, rgba(255,255,255,0.03) 0%, transparent 40%);
+
+.hero-full::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(244,196,48,0.7) 30%, rgba(244,196,48,0.9) 50%, rgba(244,196,48,0.7) 70%, transparent 100%);
+    z-index: 3;
 }
-.hero::after {
-    content: ''; position: absolute; inset: 0; z-index: 2;
-    border-radius: 24px;
-    border: 1px solid rgba(29,158,117,0.18);
-    pointer-events: none;
+
+.hero-full__content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 6vw 8vh;
+    max-width: 820px;
 }
-.hero-overlay {
-    position: absolute; inset: 0; z-index: 1;
-    display: flex; align-items: center; gap: 36px;
-    padding: 48px 52px;
+
+.hero-full__kicker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
 }
-.hero-mosque-wrap {
-    flex-shrink: 0;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
+
+.hero-full__kicker-line {
+    width: 36px;
+    height: 1px;
+    background: rgba(244,196,48,0.75);
 }
-.hero-mosque {
-    width: 88px; height: 88px; border-radius: 50%;
-    border: 2px solid rgba(255,215,0,0.35);
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 38px;
+
+.hero-full__kicker-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(244,196,48,0.85);
 }
-.hero-est {
-    font-size: 15px; font-weight: 600; letter-spacing: 2px;
-    color: rgba(255,215,0,0.65); text-align: center;
-    font-family: 'Playfair Display', serif;
+
+.hero-full__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(42px, 6.5vw, 82px);
+    font-weight: 300;
+    line-height: 1.06;
+    letter-spacing: -0.5px;
+    color: #ffffff;
+    margin: 0 0 8px;
 }
-.hero-text { color: white; flex: 1; }
-.hero-eyebrow {
-    font-size: 11px; font-weight: 600; letter-spacing: 2.5px;
-    text-transform: uppercase; color: #9FE1CB; margin-bottom: 10px;
-    display: flex; align-items: center; gap: 8px;
+
+.hero-full__title em {
+    font-style: italic;
+    font-weight: 300;
+    color: rgba(244,196,48,0.95);
 }
-.hero-eyebrow::before {
-    content: ''; display: inline-block;
-    width: 6px; height: 6px; border-radius: 50%;
-    background: #1D9E75; flex-shrink: 0;
+
+.hero-full__sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 300;
+    font-style: italic;
+    color: rgba(255,255,255,0.68);
+    margin: 0 0 28px;
+    letter-spacing: 0.3px;
 }
-.hero-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 28px; font-weight: 700; line-height: 1.28;
-    margin-bottom: 10px; text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+
+.hero-full__divider {
+    width: 48px;
+    height: 1px;
+    background: rgba(244,196,48,0.6);
+    margin-bottom: 28px;
 }
-.hero-sub {
-    font-size: 13px; color: rgba(255,255,255,0.68);
-    line-height: 1.78; margin-bottom: 20px; max-width: 460px;
+
+.hero-full__desc {
+    font-family: 'DM Sans', sans-serif;
+    font-size: clamp(13px, 1.2vw, 15px);
+    font-weight: 300;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.62);
+    max-width: 460px;
+    margin-bottom: 40px;
 }
-.hero-divider {
-    width: 40px; height: 2px;
-    background: linear-gradient(90deg, #FFD700, transparent);
-    border-radius: 2px; margin-bottom: 18px;
+
+.hero-full__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: #071a14;
+    background: rgba(244,196,48,0.95);
+    padding: 14px 30px;
+    border-radius: 2px;
+    transition: background 0.25s, transform 0.25s, gap 0.25s;
 }
-.hero-stats { display: flex; gap: 28px; margin-bottom: 22px; }
-.hstat-num {
-    font-size: 22px; font-weight: 700; color: #FFD700;
-    font-family: 'Playfair Display', serif; line-height: 1;
+
+.hero-full__cta:hover {
+    background: #FFD700;
+    transform: translateY(-2px);
+    gap: 14px;
+    text-decoration: none;
+    color: #071a14;
 }
-.hstat-lbl { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; }
-.hero-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 11px 24px; background: #FFD700; color: #071a14;
-    font-size: 13px; font-weight: 700; border-radius: 20px;
-    text-decoration: none; letter-spacing: 0.3px;
-    transition: opacity 0.2s, transform 0.2s;
+
+.hero-full__stats {
+    position: absolute;
+    bottom: 8vh;
+    right: 5vw;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 20px;
 }
-.hero-btn:hover { opacity: 0.88; transform: translateY(-1px); text-decoration: none; color: #071a14; }
+
+.hero-full__stat { text-align: right; }
+
+.hero-full__stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 34px;
+    font-weight: 300;
+    color: rgba(244,196,48,0.9);
+    line-height: 1;
+}
+
+.hero-full__stat-lbl {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+    margin-top: 4px;
+}
+
+.hero-full__stats-divider {
+    width: 28px;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    align-self: flex-end;
+}
+
+.hero-full__scroll {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.45;
+    animation: scrollHint 2.4s ease-in-out infinite;
+}
+
+@keyframes scrollHint {
+    0%, 100% { opacity: 0.45; transform: translateX(-50%) translateY(0); }
+    50% { opacity: 0.25; transform: translateX(-50%) translateY(6px); }
+}
+
+.hero-full__scroll-line {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.5);
+}
+
+.hero-full__scroll-text {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+}
 
 /* ══ ADMIN STATS ══ */
 .admin-stat-wrap { margin-bottom: 44px; }
@@ -215,7 +332,7 @@
 .dkm-chip { font-size: 10px; font-weight: 600; padding: 3px 12px; background: rgba(29,158,117,0.15); color: #5DCAA5; border-radius: 20px; border: 1px solid rgba(29,158,117,0.2); }
 .dkm-card-more { display: flex; align-items: center; justify-content: center; min-height: 144px; border-style: dashed !important; color: #5DCAA5; font-size: 13px; font-weight: 600; }
 
-/* ══ JADWAL SHOLAT — UPGRADE UI ══ */
+/* ══ JADWAL SHOLAT ══ */
 .jadwal-wrap { margin-bottom: 44px; }
 .jadwal-card {
     background: rgba(13,51,34,0.75);
@@ -225,12 +342,10 @@
     overflow: hidden;
     position: relative;
 }
-/* Strip atas bercahaya */
 .jadwal-card::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
     background: linear-gradient(90deg, transparent, #1D9E75 30%, #FFD700 50%, #1D9E75 70%, transparent);
 }
-/* Header */
 .jadwal-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 18px 24px 14px;
@@ -256,8 +371,6 @@
     animation: pdot 2s infinite;
 }
 @keyframes pdot { 0%,100%{opacity:1} 50%{opacity:0.25} }
-
-/* Grid 5 waktu */
 .jadwal-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -272,18 +385,15 @@
     cursor: default;
 }
 .jadwal-item:hover { background: rgba(29,158,117,0.08); }
-/* Garis pemisah vertikal */
 .jadwal-item + .jadwal-item::after {
     content: ''; position: absolute; left: -3px; top: 18%; bottom: 18%;
     width: 1px; background: rgba(29,158,117,0.12);
 }
-/* Waktu aktif */
 .jadwal-item.aktif {
     background: rgba(29,158,117,0.13);
     border-color: rgba(29,158,117,0.28);
 }
 .jadwal-item.aktif + .jadwal-item::after { display: none; }
-
 .jadwal-waktu-icon { font-size: 22px; line-height: 1; }
 .jadwal-waktu-nama {
     font-size: 10px; font-weight: 600; letter-spacing: 1px;
@@ -294,7 +404,6 @@
     font-family: 'Playfair Display', serif; letter-spacing: 0.5px;
 }
 .jadwal-item.aktif .jadwal-waktu-jam { color: #FFD700; }
-
 .jadwal-aktif-badge {
     display: none; font-size: 9px; font-weight: 700;
     padding: 2px 8px; background: rgba(255,215,0,0.12);
@@ -302,8 +411,6 @@
     border: 1px solid rgba(255,215,0,0.22); letter-spacing: 0.5px;
 }
 .jadwal-item.aktif .jadwal-aktif-badge { display: block; }
-
-/* Countdown ke sholat berikutnya */
 .jadwal-countdown-bar {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     padding: 10px 24px;
@@ -322,6 +429,42 @@
 .kjn-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: rgba(29,158,117,0.42); }
 .kjn-img { width: 100%; height: 135px; object-fit: cover; display: block; }
 .kjn-img-ph { width: 100%; height: 135px; background: rgba(8,80,65,0.45); display: flex; align-items: center; justify-content: center; font-size: 34px; }
+
+/* Kajian Play Overlay */
+.kjn-play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 135px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.kjn-card:hover .kjn-play-overlay {
+    background: rgba(0,0,0,0.5);
+}
+
+.kjn-play-btn {
+    width: 50px;
+    height: 50px;
+    background: rgba(29,158,117,0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.kjn-card:hover .kjn-play-btn {
+    background: rgba(29,158,117,1);
+    transform: scale(1.1);
+}
 .kjn-body { padding: 13px; }
 .hot-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 9px; background: rgba(226,75,74,0.14); color: #F09595; border-radius: 20px; border: 1px solid rgba(226,75,74,0.2); margin-bottom: 6px; }
 .new-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 9px; background: rgba(29,158,117,0.14); color: #5DCAA5; border-radius: 20px; border: 1px solid rgba(29,158,117,0.2); margin-bottom: 6px; }
@@ -329,31 +472,260 @@
 .kjn-meta { font-size: 11px; color: rgba(159,225,203,0.5); margin-top: 3px; }
 
 /* ══ VIDEO GRID ══ */
-.vid-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-bottom: 32px; }
-.vid-card { background: rgba(13,51,34,0.7); backdrop-filter: blur(8px); border-radius: 16px; overflow: hidden; border: 1px solid rgba(29,158,117,0.18); cursor: pointer; transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s; }
-.vid-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); border-color: rgba(29,158,117,0.42); }
-.vid-thumb { position: relative; height: 125px; background: rgba(8,80,65,0.55); overflow: hidden; }
-.vid-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: 0.75; transition: opacity 0.2s; }
-.vid-card:hover .vid-thumb img { opacity: 0.9; }
-.vid-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 42px; height: 42px; border-radius: 50%; background: rgba(255,215,0,0.92); display: flex; align-items: center; justify-content: center; font-size: 14px; color: #071a14; transition: transform 0.2s; }
-.vid-card:hover .vid-play { transform: translate(-50%,-50%) scale(1.1); }
-.vid-body { padding: 12px 14px; }
-.vid-title { font-size: 13px; font-weight: 600; color: #9FE1CB; margin-bottom: 4px; line-height: 1.4; }
-.vid-meta { font-size: 11px; color: rgba(159,225,203,0.5); }
+.vid-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 20px; 
+}
+
+.vid-card { 
+    background: rgba(13,51,34,0.8); 
+    border: 1px solid rgba(29,158,117,0.2); 
+    border-radius: 16px; 
+    overflow: hidden; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+}
+
+.vid-card:hover { 
+    transform: translateY(-4px); 
+    box-shadow: 0 12px 32px rgba(0,0,0,0.3); 
+    border-color: rgba(29,158,117,0.5); 
+}
+
+.vid-thumb { 
+    position: relative; 
+    padding-bottom: 56.25%; 
+    background: #000; 
+}
+
+.vid-thumb img { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+}
+
+.vid-play { 
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    width: 50px; 
+    height: 50px; 
+    background: rgba(29,158,117,0.8); 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: white; 
+    font-size: 20px; 
+    transition: all 0.3s ease; 
+    z-index: 2;
+}
+
+.vid-card:hover .vid-play { 
+    background: rgba(29,158,117,1); 
+    transform: translate(-50%, -50%) scale(1.1); 
+}
+
+.vid-duration {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    z-index: 2;
+}
+
+.vid-body { 
+    padding: 16px; 
+}
+
+.vid-title { 
+    font-size: 14px; 
+    font-weight: 600; 
+    color: #fff; 
+    margin-bottom: 8px; 
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.vid-meta { 
+    font-size: 12px; 
+    color: rgba(159,225,203,0.7); 
+    margin-bottom: 4px; 
+}
+
+/* ══ WAKTU SHOLAT CARD ══ */
+.waktu-sholat-card {
+    background: 
+        radial-gradient(ellipse at 20% 10%, rgba(255,215,0,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 90%, rgba(29,158,117,0.12) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, rgba(13,51,34,0.95) 0%, rgba(7,26,20,0.98) 100%);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 40px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 24px 58px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+}
+.waktu-sholat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(255,215,0,0.03) 0%, transparent 25%),
+        radial-gradient(circle at 75% 75%, rgba(29,158,117,0.04) 0%, transparent 30%);
+    pointer-events: none;
+    z-index: 1;
+}
+.waktu-sholat-content { position: relative; z-index: 2; }
+.waktu-sholat-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px;
+}
+.waktu-sholat-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px; font-weight: 700; color: #FFD700; margin: 0;
+}
+.waktu-sholat-date {
+    font-size: 14px; color: rgba(159,225,203,0.8);
+    background: rgba(255,255,255,0.1);
+    padding: 8px 16px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.15);
+}
+.waktu-sholat-current {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 24px; margin-bottom: 24px; text-align: center;
+}
+.waktu-sholat-current-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: rgba(255,255,255,0.6); margin-bottom: 8px;
+}
+.waktu-sholat-current-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; font-weight: 700; color: #FFD700; margin-bottom: 8px;
+}
+.waktu-sholat-current-time {
+    font-size: 20px; font-weight: 600; color: #9FE1CB; margin-bottom: 12px;
+}
+.waktu-sholat-next-info { font-size: 14px; color: rgba(255,255,255,0.7); }
+.waktu-sholat-next-info strong { color: #FFD700; font-weight: 600; }
+.waktu-sholat-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;
+}
+.waktu-sholat-item {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px; padding: 20px 16px; text-align: center;
+    transition: all 0.3s ease; position: relative; overflow: hidden;
+}
+.waktu-sholat-item::before {
+    content: ''; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.3s ease; pointer-events: none;
+}
+.waktu-sholat-item:hover::before { opacity: 1; }
+.waktu-sholat-item:hover { transform: translateY(-4px); border-color: rgba(255,215,0,0.3); }
+.waktu-sholat-item.current {
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(29,158,117,0.15));
+    border-color: rgba(255,215,0,0.4);
+    animation: pulse 3s infinite;
+}
+.waktu-sholat-item.next {
+    background: linear-gradient(135deg, rgba(29,158,117,0.2), rgba(13,51,34,0.15));
+    border-color: rgba(29,158,117,0.4);
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.95; }
+}
+.waktu-sholat-icon {
+    width: 36px; height: 36px; margin-bottom: 12px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #ffea78; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+.waktu-sholat-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700; color: #FFD700; margin-bottom: 6px;
+}
+.waktu-sholat-time {
+    font-size: 18px; font-weight: 700; color: #9FE1CB; margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+}
+.waktu-sholat-desc { font-size: 11px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+.waktu-sholat-status {
+    position: absolute; top: 8px; right: 8px;
+    padding: 4px 8px; border-radius: 12px;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+}
+.waktu-sholat-status.current {
+    background: rgba(255,215,0,0.2); color: #FFD700;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+.waktu-sholat-status.next {
+    background: rgba(29,158,117,0.2); color: #5DCAA5;
+    border: 1px solid rgba(29,158,117,0.3);
+}
 
 /* ══ RESPONSIVE ══ */
 @media (max-width: 768px) {
-    .db { padding: 20px 16px; }
-    .hero { height: auto; min-height: 300px; }
-    .hero-overlay { flex-direction: column; gap: 16px; padding: 28px 24px; align-items: flex-start; }
-    .hero-mosque { width: 64px; height: 64px; font-size: 28px; }
-    .hero-title { font-size: 22px; }
-    .hero-stats { gap: 18px; }
+    .db { padding: 0 16px 20px; }
+
+    .hero-full {
+        width: calc(100% + 32px);
+        margin-left: -16px;
+        height: 100svh;
+        min-height: 580px;
+        max-height: 750px;
+        margin-bottom: 40px;
+    }
+    .hero-full__content {
+        padding: 0 24px 10vh;
+        max-width: 100%;
+    }
+    .hero-full__stats { display: none; }
+    .hero-full__veil {
+        background:
+            linear-gradient(180deg,
+                rgba(4,20,12,0.35) 0%,
+                rgba(4,20,12,0.15) 25%,
+                rgba(4,20,12,0.65) 70%,
+                rgba(4,20,12,0.92) 100%
+            );
+    }
+    .hero-full__desc { max-width: 100%; }
+
     .admin-stat-grid { grid-template-columns: 1fr; }
     .jadwal-grid { grid-template-columns: repeat(3,1fr); }
+    .waktu-sholat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .waktu-sholat-card { padding: 24px 20px; margin-bottom: 32px; }
+    .waktu-sholat-title { font-size: 24px; }
+    .waktu-sholat-current-name { font-size: 28px; }
+    .waktu-sholat-current-time { font-size: 18px; }
+    .waktu-sholat-item { padding: 16px 12px; }
+    .waktu-sholat-name { font-size: 14px; }
+    .waktu-sholat-time { font-size: 16px; }
 }
+
 @media (max-width: 480px) {
     .jadwal-grid { grid-template-columns: repeat(3,1fr); }
+    .waktu-sholat-grid { grid-template-columns: repeat(1, 1fr); }
 }
 </style>
 
@@ -366,97 +738,74 @@
 
     <div class="db">
 
-        {{-- ══ HERO ══ --}}
-        <div class="hero">
+        {{-- ══ HERO FULL-IMAGE ══ --}}
+        <div class="hero-full">
 
-            {{-- ===== SLOT FOTO MASJID =====
-                 Letak file : public/images/masjid/Masjid1.jpg
-                 Ganti nama file sesuai kebutuhan
-            ===== --}}
             <img
                 src="{{ asset('images/masjid/Masjid1.jpg') }}"
-                class="hero-photo"
+                class="hero-full__img"
                 alt="Masjid Al-Hasanah"
                 onerror="this.style.display='none'"
             >
-            <div class="hero-overlay-dark"></div>
-            <div class="hero-overlay-bottom"></div>
-            <div class="hero-shimmer"></div>
 
-            <div class="hero-overlay">
-                <div class="hero-mosque-wrap">
-                    <div class="hero-mosque">🕌</div>
-                    <div class="hero-est">الحسنة</div>
+            <div class="hero-full__veil"></div>
+
+            <div class="hero-full__content">
+
+                <div class="hero-full__kicker">
+                    <span class="hero-full__kicker-line"></span>
+                    <span class="hero-full__kicker-text">Masjid Al-Hasanah · Jakarta Timur</span>
                 </div>
-                <div class="hero-text">
-                    <div class="hero-eyebrow">Masjid Al-Hasanah</div>
-                    <div class="hero-title">
-                        Website Resmi<br>
-                        Dewan Kemakmuran Masjid Al-Hasanah
-                    </div>
-                    <div class="hero-divider"></div>
-                    <div class="hero-sub">
-                        Komplek Pushubad Cijantung Jl. Radar VII Kel. Kalisari<br>
-                        Kec. Pasar Rebo, Jakarta Timur 13790<br>
-                        Selamat datang, {{ auth()->user()->name }}
-                    </div>
-                    <div class="hero-stats">
-                        <div class="hstat">
-                            <div class="hstat-num">{{ $totalDkm }}</div>
-                            <div class="hstat-lbl">Anggota DKM</div>
-                        </div>
-                        <div class="hstat">
-                            <div class="hstat-num">{{ $totalKajian }}</div>
-                            <div class="hstat-lbl">Kajian Aktif</div>
-                        </div>
-                        <div class="hstat">
-                            <div class="hstat-num">{{ $videos->count() }}</div>
-                            <div class="hstat-lbl">Video</div>
-                        </div>
-                    </div>
-                    <a href="/rekomendasi" class="hero-btn">Lihat Rekomendasi →</a>
+
+                <h1 class="hero-full__title">
+                    Dewan Kemakmuran<br>
+                    <em>Masjid Al-Hasanah</em>
+                </h1>
+
+                <p class="hero-full__sub">Mengamalkan Ilmu sesuai Al-Quran dan Sunnah, Menjaga Ukhuwah yang kokoh.</p>
+
+                <div class="hero-full__divider"></div>
+
+                <p class="hero-full__desc">
+                    Komplek Pushubad Cijantung, Kalisari, Pasar Rebo — Jakarta Timur.<br>
+                    Platform pengelolaan masjid modern yang menghubungkan jamaah dengan ilmu dan komunitas.
+                </p>
+
+                <a href="/rekomendasi" class="hero-full__cta">
+                    Eksplorasi Kajian <span>→</span>
+                </a>
+
+            </div>
+
+            <div class="hero-full__stats">
+                <div class="hero-full__stat">
+                    <div class="hero-full__stat-num">{{ $totalDkm }}</div>
+                    <div class="hero-full__stat-lbl">Anggota DKM</div>
+                </div>
+                <div class="hero-full__stats-divider"></div>
+                <div class="hero-full__stat">
+                    <div class="hero-full__stat-num">{{ $totalKajian }}</div>
+                    <div class="hero-full__stat-lbl">Kajian Aktif</div>
+                </div>
+                <div class="hero-full__stats-divider"></div>
+                <div class="hero-full__stat">
+                    <div class="hero-full__stat-num">{{ $videos->count() }}</div>
+                    <div class="hero-full__stat-lbl">Video</div>
                 </div>
             </div>
+
+            <div class="hero-full__scroll">
+                <div class="hero-full__scroll-line"></div>
+                <span class="hero-full__scroll-text">Scroll</span>
+            </div>
+
         </div>
-
-        <div class="admin-stat-wrap">
-            <div class="sec-head">
-                <div class="sec-label">Dashboard Statistik</div>
-                <span class="sec-badge">Admin Insight</span>
-                <div class="sec-line"></div>
-            </div>
-
-            <div class="admin-stat-grid">
-                <div class="admin-stat-card">
-                    <small>Total Jamaah</small>
-                    <strong>{{ $totalJamaah }}</strong>
-                    <span>Total pengguna yang sudah terdaftar dan dapat mengakses platform masjid.</span>
-                </div>
-
-                <div class="admin-stat-card">
-                    <small>Total Kajian</small>
-                    <strong>{{ $totalKajian }}</strong>
-                    <span>Seluruh kajian aktif yang tercatat dan siap dijelajahi jamaah.</span>
-                </div>
-
-                <div class="admin-stat-card">
-                    <small>Total Rating</small>
-                    <strong>{{ $totalRating }}</strong>
-                    <span>Dataset penilaian yang menjadi fondasi sistem rekomendasi hybrid.</span>
-                </div>
-
-                <div class="admin-stat-card">
-                    <small>Total Donasi</small>
-                    <strong>Rp {{ number_format($totalDonasi, 0, ',', '.') }}</strong>
-                    <span>{{ $totalTransaksiDonasi }} transaksi donasi tercatat dalam sistem.</span>
-                </div>
-            </div>
-        </div>
+        {{-- end hero-full --}}
 
 
         {{-- ══ GALERI ══ --}}
         <div class="sec-head">
-            <div class="sec-label">Galeri Masjid</div>
+            <div class="sec-label">Galeri</div>
             <span class="sec-badge">Dokumentasi</span>
             <div class="sec-line"></div>
         </div>
@@ -468,52 +817,99 @@
                     <img src="{{ asset('images/masjid/Masjid2.jpg') }}" alt="Halaman Luar Masjid"
                          onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
                     <div class="gallery-placeholder" style="display:none;">🕌</div>
-                    <div class="gallery-cap">Halaman Luar Masjid</div>
+                    <div class="gallery-cap"></div>
                 </div>
 
                 <div class="gallery-slide">
                     <img src="{{ asset('images/masjid/Masjid5.jpg') }}" alt="Halaman Dalam Masjid"
                          onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
                     <div class="gallery-placeholder" style="display:none;">🕌</div>
-                    <div class="gallery-cap">Halaman Dalam Masjid</div>
+                    <div class="gallery-cap"></div>
                 </div>
 
                 <div class="gallery-slide">
                     <img src="{{ asset('images/masjid/Masjid3.jpg') }}" alt="Kegiatan TPA"
                          onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
                     <div class="gallery-placeholder" style="display:none;">📖</div>
-                    <div class="gallery-cap">Kegiatan TPA</div>
+                    <div class="gallery-cap"></div>
                 </div>
 
                 <div class="gallery-slide">
                     <img src="{{ asset('images/masjid/photo1.jpg') }}" alt="Kajian Rutin"
                          onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
                     <div class="gallery-placeholder" style="display:none;">📚</div>
-                    <div class="gallery-cap">Kajian Rutin</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid7.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
                 </div>
 
                 <div class="gallery-slide">
                     <img src="{{ asset('images/masjid/Masjid4.jpg') }}" alt="Menu Sahur"
                          onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
                     <div class="gallery-placeholder" style="display:none;">🌙</div>
-                    <div class="gallery-cap">Menu Sahur</div>
+                    <div class="gallery-cap"></div>
                 </div>
 
-                {{--
-                    Tambah slide baru:
-                    <div class="gallery-slide">
-                        <img src="{{ asset('images/masjid/NamaFile.jpg') }}" alt="Keterangan"
-                             onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
-                        <div class="gallery-placeholder" style="display:none;">🕌</div>
-                        <div class="gallery-cap">Keterangan Foto</div>
-                    </div>
-                --}}
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid8.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid9.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid10.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid11.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid12.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid13.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
+
+                <div class="gallery-slide">
+                    <img src="{{ asset('images/masjid/Masjid14.jpg') }}" alt="Kajian Rutin"
+                         onerror="this.parentElement.querySelector('.gallery-placeholder').style.display='flex';this.style.display='none';">
+                    <div class="gallery-placeholder" style="display:none;">📚</div>
+                    <div class="gallery-cap"></div>
+                </div>
 
             </div>
             <button class="gal-arrow gal-next" onclick="galleryScroll(1)">›</button>
         </div>
 
 
+        
         {{-- ══ DKM ══ --}}
         <div class="sec-head">
             <div class="sec-label">Anggota DKM</div>
@@ -548,108 +944,26 @@
         </div>
 
 
-        {{-- ══ JADWAL SHOLAT ══ --}}
+        {{-- ══ PENGUMUMAN ══ --}}
         <div class="sec-head">
-            <div class="sec-label">Jadwal Sholat</div>
-            <span class="sec-badge">Hari Ini</span>
+            <div class="sec-label">Pengumuman Masjid</div>
+            <span class="sec-badge">Terbaru</span>
             <div class="sec-line"></div>
         </div>
-
-        <div class="jadwal-wrap">
-            <div class="jadwal-card">
-
-                <div class="jadwal-header">
-                    <div class="jadwal-header-left">
-                        <div class="jadwal-icon-wrap">🕌</div>
-                        <div>
-                            <div class="jadwal-title">Jadwal Sholat Hari Ini</div>
-                            <div class="jadwal-subtitle">Jakarta Timur · Pasar Rebo</div>
-                        </div>
-                    </div>
-                    <div class="jadwal-date-pill">
-                        <div class="jadwal-dot"></div>
-                        <span id="jadwal-tanggal">—</span>
-                    </div>
+        <div class="kjn-grid" style="margin-bottom: 44px;">
+            @foreach($pengumuman as $p)
+            <div class="kjn-card">
+                <img src="{{ $p->gambar ?? 'https://via.placeholder.com/400x200' }}" class="kjn-img" alt="{{ $p->judul }}"
+                     onerror="this.style.display='none'">
+                <div class="kjn-body">
+                    <div class="kjn-title">{{ $p->judul }}</div>
+                    <div class="kjn-meta">{{ \Illuminate\Support\Str::limit($p->isi, 80) }}</div>
+                    <div class="kjn-meta" style="margin-top:6px;">📅 {{ $p->tanggal }}</div>
                 </div>
-
-                @if($jadwal)
-                <div class="jadwal-grid" id="jadwal-grid">
-
-                    <div class="jadwal-item" data-waktu="{{ $jadwal['Fajr'] }}">
-                        <div class="jadwal-waktu-icon">🌙</div>
-                        <div class="jadwal-waktu-nama">Subuh</div>
-                        <div class="jadwal-waktu-jam">{{ $jadwal['Fajr'] }}</div>
-                        <div class="jadwal-aktif-badge">Waktu Ini</div>
-                    </div>
-
-                    <div class="jadwal-item" data-waktu="{{ $jadwal['Dhuhr'] }}">
-                        <div class="jadwal-waktu-icon">☀️</div>
-                        <div class="jadwal-waktu-nama">Dzuhur</div>
-                        <div class="jadwal-waktu-jam">{{ $jadwal['Dhuhr'] }}</div>
-                        <div class="jadwal-aktif-badge">Waktu Ini</div>
-                    </div>
-
-                    <div class="jadwal-item" data-waktu="{{ $jadwal['Asr'] }}">
-                        <div class="jadwal-waktu-icon">🌤️</div>
-                        <div class="jadwal-waktu-nama">Ashar</div>
-                        <div class="jadwal-waktu-jam">{{ $jadwal['Asr'] }}</div>
-                        <div class="jadwal-aktif-badge">Waktu Ini</div>
-                    </div>
-
-                    <div class="jadwal-item" data-waktu="{{ $jadwal['Maghrib'] }}">
-                        <div class="jadwal-waktu-icon">🌅</div>
-                        <div class="jadwal-waktu-nama">Maghrib</div>
-                        <div class="jadwal-waktu-jam">{{ $jadwal['Maghrib'] }}</div>
-                        <div class="jadwal-aktif-badge">Waktu Ini</div>
-                    </div>
-
-                    <div class="jadwal-item" data-waktu="{{ $jadwal['Isha'] }}">
-                        <div class="jadwal-waktu-icon">🌃</div>
-                        <div class="jadwal-waktu-nama">Isya</div>
-                        <div class="jadwal-waktu-jam">{{ $jadwal['Isha'] }}</div>
-                        <div class="jadwal-aktif-badge">Waktu Ini</div>
-                    </div>
-
-                </div>
-
-                <div class="jadwal-countdown-bar">
-                    <span>Sholat berikutnya dalam</span>
-                    <span class="jadwal-countdown-val" id="jadwal-countdown">—</span>
-                </div>
-
-                @else
-                <div class="jadwal-unavail">Jadwal sholat tidak tersedia saat ini.</div>
-                @endif
-
             </div>
+            @endforeach
         </div>
 
-
-        <!-- PENGUMUMAN -->
-        <div class="section-title">📢 Pengumuman Masjid</div>
-
-        <div class="grid">
-        @foreach($pengumuman as $p)
-            <div class="card">
-
-                <!-- IMAGE -->
-                <img src="{{ $p->gambar ?? 'https://via.placeholder.com/400x200' }}">
-
-                <div class="card-body">
-                    <h4 style="color:#198754;">{{ $p->judul }}</h4>
-
-                    <p style="font-size:13px; color:#666;">
-                        {{ \Illuminate\Support\Str::limit($p->isi, 100) }}
-                    </p>
-
-                    <small style="color:#999;">
-                        📅 {{ $p->tanggal }}
-                    </small>
-                </div>
-
-            </div>
-        @endforeach
-        </div>
 
         {{-- ══ TRENDING KAJIAN ══ --}}
         <div class="sec-head">
@@ -676,25 +990,124 @@
         </div>
 
 
+        {{-- ══ DASHBOARD STATISTIK ══ --}}
+        <div class="admin-stat-wrap">
+            <div class="sec-head">
+                <div class="sec-label">Dashboard Statistik</div>
+                <span class="sec-badge">Admin Insight</span>
+                <div class="sec-line"></div>
+            </div>
+            <div class="admin-stat-grid">
+                <div class="admin-stat-card">
+                    <small>Total Jamaah</small>
+                    <strong>{{ $totalJamaah }}</strong>
+                    <span>Total pengguna yang sudah terdaftar dan dapat mengakses platform masjid.</span>
+                </div>
+                <div class="admin-stat-card">
+                    <small>Total Kajian</small>
+                    <strong>{{ $totalKajian }}</strong>
+                    <span>Seluruh kajian aktif yang tercatat dan siap dijelajahi jamaah.</span>
+                </div>
+                <div class="admin-stat-card">
+                    <small>Total Rating</small>
+                    <strong>{{ $totalRating }}</strong>
+                    <span>Dataset penilaian yang menjadi fondasi sistem rekomendasi hybrid.</span>
+                </div>
+                <div class="admin-stat-card">
+                    <small>Total Donasi</small>
+                    <strong>Rp {{ number_format($totalDonasi, 0, ',', '.') }}</strong>
+                    <span>{{ $totalTransaksiDonasi }} transaksi donasi tercatat dalam sistem.</span>
+                </div>
+            </div>
+        </div>
+
+
+        {{-- ══ WAKTU SHOLAT ══ --}}
+        <div class="waktu-sholat-card">
+            <div class="waktu-sholat-content">
+                <div class="waktu-sholat-header">
+                    <h2 class="waktu-sholat-title">Jadwal Sholat Hari Ini</h2>
+                    <div class="waktu-sholat-date">{{ $today->locale('id')->translatedFormat('d F Y') }}</div>
+                </div>
+
+                <div class="waktu-sholat-current">
+                    <div class="waktu-sholat-current-label">Waktu Sholat Saat Ini</div>
+                    <div class="waktu-sholat-current-name">{{ $prayerTimes[$currentPrayer]['name'] }}</div>
+                    <div class="waktu-sholat-current-time">{{ $prayerTimes[$currentPrayer]['time'] }} WIB</div>
+                    <div class="waktu-sholat-next-info">
+                        Sholat berikutnya: <strong>{{ $prayerTimes[$nextPrayer]['name'] }}</strong> pukul <strong>{{ $prayerTimes[$nextPrayer]['time'] }} WIB</strong>
+                    </div>
+                </div>
+
+                <div class="waktu-sholat-grid">
+                    @foreach($prayerTimes as $key => $prayer)
+                        <div class="waktu-sholat-item 
+                            {{ $key === $currentPrayer ? 'current' : '' }} 
+                            {{ $key === $nextPrayer ? 'next' : '' }}">
+                            
+                            @if($key === $currentPrayer)
+                                <div class="waktu-sholat-status current">Saat Ini</div>
+                            @elseif($key === $nextPrayer)
+                                <div class="waktu-sholat-status next">Berikutnya</div>
+                            @endif
+                            
+                            @include('components.prayer-icon', ['icon' => $prayer['icon'], 'class' => 'waktu-sholat-icon'])
+                            <h3 class="waktu-sholat-name">{{ $prayer['name'] }}</h3>
+                            <div class="waktu-sholat-time">{{ $prayer['time'] }}</div>
+                            <p class="waktu-sholat-desc">{{ $prayer['description'] }}</p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+
         {{-- ══ KAJIAN TERBARU ══ --}}
         <div class="sec-head">
-            <div class="sec-label">Kajian Terbaru</div>
+            <div class="sec-label">Kitab Kajian</div>
             <span class="sec-badge">Baru Ditambahkan</span>
             <div class="sec-line"></div>
         </div>
         <div class="kjn-grid">
             @foreach($kajianTerbaru as $k)
-            <div class="kjn-card">
-                @if($k->image)
-                    <img src="{{ $k->image }}" class="kjn-img" alt="{{ $k->judul }}">
-                @else
-                    <div class="kjn-img-ph">📚</div>
-                @endif
+            @php
+                // Extract YouTube video ID
+                $videoId = '';
+                if ($k->youtube_url) {
+                    preg_match('/(youtu\.be\/|v=)([^&\?]+)/', $k->youtube_url, $matches);
+                    $videoId = $matches[2] ?? '';
+                }
+            @endphp
+            <div class="kjn-card" @if($videoId) onclick="playKajianVideo(this, '{{ $videoId }}')" style="cursor: pointer;" @endif>
+                <div style="position: relative;">
+                    @if($k->image)
+                        <img src="{{ $k->image }}" class="kjn-img" alt="{{ $k->judul }}">
+                        @if($videoId)
+                        <div class="kjn-play-overlay">
+                            <div class="kjn-play-btn">▶</div>
+                        </div>
+                        @endif
+                    @else
+                        <div class="kjn-img-ph">📚</div>
+                        @if($videoId)
+                        <div class="kjn-play-overlay" style="background: rgba(29,158,117,0.1);">
+                            <div class="kjn-play-btn">▶</div>
+                        </div>
+                        @endif
+                    @endif
+                </div>
                 <div class="kjn-body">
+                    @if($videoId)
+                    <span class="new-badge" style="background: rgba(255,215,0,0.14); color: #FFD700; border: 1px solid rgba(255,215,0,0.2;">VIDEO</span>
+                    @else
                     <span class="new-badge">BARU</span>
+                    @endif
                     <div class="kjn-title">{{ $k->judul }}</div>
                     <div class="kjn-meta">👤 {{ $k->ustadz->nama ?? '-' }}</div>
                     <div class="kjn-meta">⭐ {{ number_format($k->ratings_avg_rating ?? 0, 1) }}</div>
+                    @if($videoId)
+                    <div class="kjn-meta">📹 Video Kajian</div>
+                    @endif
                 </div>
             </div>
             @endforeach
@@ -710,19 +1123,43 @@
         <div class="vid-grid">
             @foreach($videos as $v)
             @php
-                preg_match('/(youtu\.be\/|v=)([^&]+)/', $v->youtube_url, $matches);
-                $vid = $matches[2] ?? null;
+                // Extract YouTube video ID from youtube_url
+                $videoId = '';
+                if ($v->youtube_url) {
+                    // Handle various YouTube URL formats
+                    if (preg_match('/youtu\.be\/([^&\?]+)/', $v->youtube_url, $matches)) {
+                        $videoId = $matches[1];
+                    } elseif (preg_match('/youtube\.com\/.*[?&]v=([^&\?]+)/', $v->youtube_url, $matches)) {
+                        $videoId = $matches[1];
+                    } elseif (preg_match('/youtube\.com\/.*\/([^\/\?&]+)/', $v->youtube_url, $matches)) {
+                        $videoId = $matches[1];
+                    }
+                }
             @endphp
-            <div class="vid-card" onclick="playVideo(this, '{{ $vid }}')">
+            <div class="vid-card" @if($videoId) onclick="playVideo(this, '{{ $videoId }}'); return false;" style="cursor: pointer;" title="Click to play: {{ $videoId }}" @endif>
                 <div class="vid-thumb">
-                    @if($vid)
-                        <img src="https://img.youtube.com/vi/{{ $vid }}/hqdefault.jpg" alt="{{ $v->judul }}">
+                    @if($v->thumbnail)
+                        <img src="{{ $v->thumbnail }}" 
+                             alt="{{ $v->judul }}"
+                             onerror="this.style.display='none';"
+                             loading="lazy">
+                    @else
+                        <img src="https://img.youtube.com/vi/{{ $videoId }}/hqdefault.jpg" 
+                             alt="{{ $v->judul }}"
+                             onerror="this.style.display='none';"
+                             loading="lazy">
                     @endif
                     <div class="vid-play">▶</div>
                 </div>
                 <div class="vid-body">
                     <div class="vid-title">{{ $v->judul }}</div>
-                    <div class="vid-meta">{{ $v->ustadz }}</div>
+                    <div class="vid-meta">🎤 {{ $v->ustadz }}</div>
+                    @if($videoId)
+                    <div class="vid-meta" style="color: #FFD700; font-size: 10px;">📹 ID: {{ $videoId }}</div>
+                    @endif
+                    @if($v->created_at)
+                    <div class="vid-meta">📅 {{ $v->created_at->format('d M Y') }}</div>
+                    @endif
                 </div>
             </div>
             @endforeach
@@ -732,12 +1169,10 @@
 </div>{{-- end .db-wrap --}}
 
 <script>
-/* ── Gallery scroll ── */
 function galleryScroll(dir) {
     document.getElementById('galleryTrack').scrollLeft += dir * 300;
 }
 
-/* ── Video embed ── */
 function playVideo(el, id) {
     if (!id) return;
     el.querySelector('.vid-thumb').innerHTML =
@@ -746,15 +1181,12 @@ function playVideo(el, id) {
             frameborder="0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
 }
 
-/* ── Jadwal sholat: tanggal, highlight aktif, countdown ── */
 (function () {
-    /* Tanggal hari ini */
     const now  = new Date();
     const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
     const elTgl = document.getElementById('jadwal-tanggal');
     if (elTgl) elTgl.textContent = now.toLocaleDateString('id-ID', opts);
 
-    /* Parse "HH:MM" dari string jadwal */
     function parseMin(str) {
         if (!str) return null;
         const m = str.match(/(\d{1,2}):(\d{2})/);
@@ -765,11 +1197,9 @@ function playVideo(el, id) {
     if (!items.length) return;
 
     const nowMin = now.getHours() * 60 + now.getMinutes();
-
-    /* Tentukan sholat aktif (waktu terakhir yang sudah lewat) */
-    let aktifIdx  = 0;
-    let nextIdx   = -1;
-    let nextMin   = null;
+    let aktifIdx = 0;
+    let nextIdx  = -1;
+    let nextMin  = null;
 
     items.forEach(function(item, i) {
         const wkt = parseMin(item.dataset.waktu);
@@ -778,13 +1208,11 @@ function playVideo(el, id) {
 
     items[aktifIdx].classList.add('aktif');
 
-    /* Tentukan sholat berikutnya */
     for (let i = aktifIdx + 1; i < items.length; i++) {
         const wkt = parseMin(items[i].dataset.waktu);
         if (wkt !== null && wkt > nowMin) { nextIdx = i; nextMin = wkt; break; }
     }
 
-    /* Countdown ke sholat berikutnya */
     const elCd = document.getElementById('jadwal-countdown');
     if (elCd && nextMin !== null) {
         function updateCd() {
@@ -802,6 +1230,254 @@ function playVideo(el, id) {
         elCd.textContent = 'Isya adalah sholat terakhir hari ini';
     }
 })();
+
+// Test Function
+function testVideoPlay() {
+    alert('Test button clicked! Video functionality is working.');
+    // Test dengan salah satu video ID yang ada
+    playVideo(null, 'BWgwRJjm3sc');
+}
+
+// Video Player Function - Simple Modal
+function playVideo(card, videoId) {
+    console.log('Playing video in modal:', videoId);
+    
+    // Remove existing modal
+    const existing = document.getElementById('videoModal');
+    if (existing) existing.remove();
+    
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'videoModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.95);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(5px);
+    `;
+    
+    modal.innerHTML = `
+        <div style="position: relative; width: 90%; max-width: 900px;">
+            <!-- Close Button -->
+            <button onclick="this.closest('#videoModal').remove()" style="
+                position: absolute;
+                top: -50px;
+                right: 0;
+                background: rgba(29,158,117,0.9);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 50px;
+                height: 50px;
+                font-size: 24px;
+                cursor: pointer;
+                z-index: 10001;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            " onmouseover="this.style.background='rgba(29,158,117,1)'; this.style.transform='scale(1.1)'" 
+               onmouseout="this.style.background='rgba(29,158,117,0.9)'; this.style.transform='scale(1)'">×</button>
+            
+            <!-- Video Container -->
+            <div style="position: relative; padding-bottom: 56.25%; height: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5);">
+                <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&showinfo=0&controls=1&modestbranding=1" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    border-radius: 16px;
+                " allowfullscreen></iframe>
+            </div>
+            
+            <!-- Video Info -->
+            <div style="
+                position: absolute;
+                bottom: -40px;
+                left: 0;
+                right: 0;
+                text-align: center;
+                color: rgba(255,255,255,0.7);
+                font-size: 14px;
+            ">
+                Press ESC or click outside to close • Click fullscreen button for full screen
+            </div>
+        </div>
+    `;
+    
+    // Click background to close
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // ESC key to close
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    // Add to page - no scroll manipulation
+    document.body.appendChild(modal);
+}
+
+// Alternative function untuk modal
+function playVideoModal(card, videoId) {
+    // Remove existing modal
+    const existing = document.getElementById('videoModal');
+    if (existing) existing.remove();
+    
+    // Create simple modal
+    const modal = document.createElement('div');
+    modal.id = 'videoModal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+    
+    modal.innerHTML = `
+        <div style="position: relative; width: 90%; max-width: 800px; background: white; padding: 20px; border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Video Player</h3>
+                <button onclick="this.closest('#videoModal').remove()" style="
+                    background: red;
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    cursor: pointer;
+                ">×</button>
+            </div>
+            <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+                <iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1" style="
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                    border-radius: 8px;
+                " allowfullscreen></iframe>
+            </div>
+        </div>
+    `;
+    
+    // Click background to close
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    document.body.appendChild(modal);
+}
+
+// Kajian Video Player Function (for original 3 kajians)
+function playKajianVideo(card, videoId) {
+    event.stopPropagation();
+    
+    // Create modal if not exists
+    let modal = document.getElementById('videoModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'videoModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        `;
+        
+        modal.innerHTML = `
+            <div style="position: relative; width: 90%; max-width: 800px;" onclick="event.stopPropagation()">
+                <button onclick="closeVideoModal()" style="
+                    position: absolute;
+                    top: -40px;
+                    right: 0;
+                    background: rgba(255,215,0,0.8);
+                    color: white;
+                    border: none;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    font-size: 20px;
+                    cursor: pointer;
+                    z-index: 10000;
+                ">×</button>
+                <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+                    <iframe id="videoFrame" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                        border-radius: 12px;
+                    " allowfullscreen></iframe>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal on background click
+        modal.addEventListener('click', closeVideoModal);
+    }
+    
+    // Set video source and show modal
+    const iframe = document.getElementById('videoFrame');
+    iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeVideoModal() {
+    const modal = document.getElementById('videoModal');
+    const iframe = document.getElementById('videoFrame');
+    
+    if (modal) {
+        modal.style.display = 'none';
+        iframe.src = '';
+        document.body.style.overflow = '';
+    }
+}
+
+// Close on ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeVideoModal();
+    }
+});
 </script>
+
+<!-- Video Modal -->
+<div id="videoModal" style="display: none;"></div>
 
 @endsection

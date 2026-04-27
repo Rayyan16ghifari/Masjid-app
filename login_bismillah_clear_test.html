@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="bx8I8KR3B9nvtRiZHYoFJu1wy2ptf43re58Ajz5L">
+
+    <title>Login - Alhasanah App</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa+Ink:wght@400;700&family=Amiri:wght@400;700&family=Amiri+Quran:wght@400;700&family=Traditional+Arabic:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --green-deep: #04291f;
+            --green-main: #0f5132;
+            --green-soft: #198754;
+            --gold: #f4c430;
+            --font-body: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            --font-display: 'Sora', 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            --font-arabic: 'Aref Ruqaa Ink', 'Amiri', serif;
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: var(--font-body);
+            background: #ffffff;
+            color: #0b2a20;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .auth-root,
+        .auth-card,
+        .auth-left {
+            will-change: opacity, transform, filter;
+        }
+
+        .auth-root {
+            opacity: 0;
+            transform: translateY(10px);
+            filter: blur(2px);
+            transition: opacity 280ms ease, transform 280ms ease, filter 280ms ease;
+        }
+
+        body.auth-enter .auth-root {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+        }
+
+        body.auth-leave .auth-root {
+            opacity: 0;
+            transform: translateY(-10px);
+            filter: blur(2px);
+        }
+
+        .auth-root {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.08fr 0.92fr;
+        }
+
+        .auth-left {
+            position: relative;
+            padding: clamp(28px, 4vw, 56px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 14px;
+            color: rgba(255,255,255,0.92);
+            background:
+                radial-gradient(900px 520px at 18% 18%, rgba(244,196,48,0.18), transparent 62%),
+                radial-gradient(720px 520px at 92% 24%, rgba(25,135,84,0.34), transparent 62%),
+                linear-gradient(135deg, #0f5132 0%, #063827 46%, #04291f 100%);
+            overflow: hidden;
+        }
+
+        .auth-left::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.14) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(255,255,255,0.06), transparent 55%),
+                linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+            background-size: 22px 22px, cover, cover;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        .auth-left::after {
+            content: "";
+            position: absolute;
+            inset: -260px -320px auto auto;
+            width: 720px;
+            height: 720px;
+            background: radial-gradient(circle at 30% 30%, rgba(244,196,48,0.22), transparent 62%);
+            transform: rotate(16deg);
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .auth-left .auth-glow {
+            position: absolute;
+            inset: auto auto -260px -300px;
+            width: 760px;
+            height: 760px;
+            background: radial-gradient(circle at 40% 40%, rgba(25,135,84,0.32), transparent 60%);
+            filter: blur(0px);
+            opacity: 0.85;
+            pointer-events: none;
+            animation: authFloat 12s ease-in-out infinite;
+        }
+
+        .auth-left-top {
+            position: relative;
+            z-index: 1;
+            margin-top: 2px;
+        }
+
+        .auth-left-content {
+            position: relative;
+            z-index: 1;
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 12px;
+            padding-top: 6px;
+        }
+
+        @keyframes authFloat {
+            0%, 100% { transform: translate3d(0,0,0); }
+            50% { transform: translate3d(18px, -14px, 0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .auth-left .auth-glow { animation: none; }
+        }
+
+        .auth-left h1 {
+            position: relative;
+            margin: 8px 0 0;
+            font-size: clamp(40px, 4.2vw, 58px);
+            line-height: 1.06;
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -1.4px;
+            max-width: 620px;
+        }
+
+        .auth-left p {
+            position: relative;
+            margin: 4px 0 0;
+            max-width: 620px;
+            font-size: 18px;
+            line-height: 1.85;
+            font-weight: 650;
+            color: rgba(255,255,255,0.72);
+        }
+
+        .auth-right {
+            padding: clamp(22px, 3.6vw, 56px);
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(900px 520px at 82% 82%, rgba(244,196,48,0.06), transparent 62%),
+                radial-gradient(720px 520px at 8% 76%, rgba(25,135,84,0.08), transparent 62%),
+                linear-gradient(135deg, #ffffff 0%, #f8faf9 46%, #f1f5f4 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* sophisticated texture matching left panel */
+        .auth-right::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.45;
+            background:
+                radial-gradient(900px 520px at 82% 82%, rgba(244,196,48,0.08), transparent 62%),
+                radial-gradient(720px 520px at 8% 76%, rgba(25,135,84,0.12), transparent 62%),
+                repeating-linear-gradient(
+                    135deg,
+                    rgba(16, 24, 40, 0.02) 0px,
+                    rgba(16, 24, 40, 0.02) 1px,
+                    transparent 1px,
+                    transparent 22px
+                ),
+                radial-gradient(circle at 1px 1px, rgba(16, 24, 40, 0.02) 1px, transparent 1px),
+                linear-gradient(135deg, rgba(255,255,255,0.03), transparent 55%),
+                linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0.02));
+            background-size: auto, auto, auto, 22px 22px, cover, cover;
+            mix-blend-mode: multiply;
+        }
+
+        .auth-right::after {
+            content: "";
+            position: absolute;
+            inset: -260px -320px auto auto;
+            width: 720px;
+            height: 720px;
+            pointer-events: none;
+            background: radial-gradient(circle at 40% 40%, rgba(244,196,48,0.18), transparent 62%);
+            transform: rotate(-16deg);
+            opacity: 0.85;
+        }
+
+        .auth-card {
+            width: min(480px, 100%);
+            border-radius: 22px;
+            padding: 40px;
+            border: 1px solid rgba(16, 24, 40, 0.12);
+            box-shadow: 0 26px 70px rgba(16,24,40,0.08);
+            background: #ffffff;
+            position: relative;
+            z-index: 1;
+        }
+
+        .auth-bismillah-left {
+            position: relative;
+            margin: 0 0 20px;
+            padding: 0 0 18px;
+            width: 100%;
+            align-self: stretch;
+        }
+
+        /* Make bismillah span full panel width (ignore left padding) */
+        .auth-left-top .auth-bismillah-left {
+            margin-left: calc(-1 * clamp(28px, 4vw, 56px));
+            margin-right: calc(-1 * clamp(28px, 4vw, 56px));
+            padding-left: clamp(28px, 4vw, 56px);
+            padding-right: clamp(28px, 4vw, 56px);
+        }
+
+        .auth-bismillah-left::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+        }
+
+        .auth-bismillah-left .arabic {
+            direction: rtl;
+            unicode-bidi: isolate;
+            width: 100%;
+            text-align: center;
+            font-family: 'Traditional Arabic', 'Amiri Quran', 'Amiri', 'Aref Ruqaa Ink', serif;
+            font-size: clamp(40px, 3.2vw, 50px);
+            line-height: 1.3;
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            white-space: normal;
+            overflow: visible;
+            word-wrap: normal;
+            color: rgba(255, 230, 128, 0.96);
+            text-shadow: 
+                0 1px 2px rgba(0,0,0,0.3),
+                0 0 4px rgba(244,196,48,0.2);
+            opacity: 0.96;
+            transform: scaleX(1.0);
+            padding: 0 8px;
+        }
+
+        @media (max-width: 980px) {
+            .auth-bismillah-left .arabic {
+                font-size: clamp(34px, 6.0vw, 42px);
+                transform: scaleX(1.0);
+                padding: 0 4px;
+                line-height: 1.25;
+            }
+        }
+
+        .auth-bismillah-left .ornament {
+            width: 100%;
+            height: 2px;
+            margin: 12px auto 0;
+            border-radius: 999px;
+            background: linear-gradient(90deg, transparent, rgba(244,196,48,0.95), transparent);
+            opacity: 0.95;
+        }
+
+        @media (max-width: 980px) {
+            .auth-bismillah-left .arabic {
+                font-size: clamp(36px, 7vw, 46px);
+            }
+        }
+
+        .auth-form-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 18px;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, rgba(255, 230, 128, 0.55), rgba(244, 196, 48, 0.95));
+            color: var(--green-deep);
+            box-shadow: 0 18px 40px rgba(244,196,48,0.18);
+            margin-bottom: 14px;
+        }
+
+        .auth-form-icon i {
+            font-size: 22px;
+        }
+
+        .auth-card h2 {
+            margin: 0 0 6px;
+            font-size: 28px;
+            font-family: var(--font-display);
+            font-weight: 800;
+            letter-spacing: -0.6px;
+            color: var(--green-main);
+        }
+
+        .auth-card .auth-subtitle {
+            margin: 0 0 18px;
+            font-size: 16px;
+            line-height: 1.7;
+            color: rgba(11,42,32,0.72);
+            font-weight: 700;
+        }
+
+        .auth-error {
+            font-size: 13px;
+            color: #b42318;
+            background: rgba(254, 228, 226, 0.95);
+            border: 1px solid rgba(254, 205, 202, 0.95);
+            padding: 10px 12px;
+            border-radius: 16px;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+
+        .auth-form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .auth-field label {
+            display: block;
+            font-size: 14px;
+            font-weight: 800;
+            color: rgba(6,56,39,0.82);
+            margin: 0 0 6px;
+            letter-spacing: 0.15px;
+        }
+
+        .auth-control {
+            position: relative;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 46px 14px 14px;
+            border-radius: 18px;
+            border: 1px solid rgba(16, 24, 40, 0.14);
+            outline: none;
+            transition: 0.2s ease;
+            font-size: 16px;
+            font-weight: 650;
+            background: #fff;
+        }
+
+        .auth-input::placeholder {
+            color: rgba(11,42,32,0.42);
+            font-weight: 600;
+        }
+
+        .auth-input:focus {
+            border-color: rgba(25,135,84,0.78);
+            box-shadow: 0 0 0 4px rgba(25,135,84,0.14);
+        }
+
+        .auth-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(15,81,50,0.5);
+            pointer-events: none;
+        }
+
+        .auth-btn {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #ffe680, var(--gold));
+            color: var(--green-deep);
+            font-size: 16px;
+            font-weight: 950;
+            cursor: pointer;
+            transition: 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 16px 38px rgba(244,196,48,0.18);
+        }
+
+        .auth-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 20px 48px rgba(244,196,48,0.22);
+        }
+
+        .auth-switch {
+            margin-top: 14px;
+            font-size: 15px;
+            color: rgba(6,56,39,0.82);
+            font-weight: 750;
+            text-align: center;
+        }
+
+        .auth-switch a {
+            color: var(--green-main);
+            font-weight: 900;
+            text-decoration: none;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 980px) {
+            .auth-root {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-left {
+                display: none;
+            }
+
+            .auth-right {
+                padding: 26px 18px;
+            }
+        }
+    </style>
+
+    </head>
+<body>
+    <main class="auth-root">
+        <section class="auth-left" aria-label="Panel Informasi">
+            <div class="auth-glow" aria-hidden="true"></div>
+            <div class="auth-left-top">
+                <div class="auth-bismillah-left" aria-label="Bismillah">
+                    <div class="arabic">بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ</div>
+                    <div class="ornament" aria-hidden="true"></div>
+                </div>
+            </div>
+
+            <div class="auth-left-content">
+                <h1>Ahlan Wa sahlan Silahkan Masuk</h1>
+                <p>Silakan login untuk mengakses fitur kajian, donasi, galeri, dan informasi masjid dengan cepat dan rapi.</p>
+            </div>
+        </section>
+
+        <section class="auth-right" aria-label="Form">
+            <div class="auth-card">
+                <div class="auth-form-icon" aria-hidden="true">
+    <i class="fas fa-key"></i>
+</div>
+<h2>Login</h2>
+<p class="auth-subtitle">Masukkan email dan password untuk melanjutkan.</p>
+
+
+<form method="POST" action="http://localhost/login" class="auth-form" novalidate>
+    <input type="hidden" name="_token" value="bx8I8KR3B9nvtRiZHYoFJu1wy2ptf43re58Ajz5L" autocomplete="off">
+    <div class="auth-field">
+        <label for="email">Email</label>
+        <div class="auth-control">
+            <input id="email" type="email" name="email" autocomplete="email" required class="auth-input" value="">
+            <i class="fas fa-envelope auth-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+
+    <div class="auth-field">
+        <label for="password">Password</label>
+        <div class="auth-control">
+            <input id="password" type="password" name="password" autocomplete="current-password" required class="auth-input">
+            <i class="fas fa-lock auth-icon" aria-hidden="true"></i>
+        </div>
+    </div>
+
+    <button type="submit" class="auth-btn">
+        <span>Masuk</span>
+        <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+    </button>
+</form>
+
+<div class="auth-switch">
+    Belum punya akun? <a href="http://localhost/register">Daftar</a>
+</div>
+            </div>
+        </section>
+    </main>
+
+    
+    <script>
+        (function () {
+            const ENTER_CLASS = 'auth-enter';
+            const LEAVE_CLASS = 'auth-leave';
+            const LEAVE_MS = 220;
+
+            // Start in enter state for consistent animation.
+            document.body.classList.add(ENTER_CLASS);
+            requestAnimationFrame(() => {
+                // ensures transitions apply after first paint
+                document.body.classList.add(ENTER_CLASS);
+            });
+
+            function isSameOriginLink(a) {
+                try {
+                    const url = new URL(a.href, window.location.href);
+                    return url.origin === window.location.origin;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function shouldHandle(a, event) {
+                if (!a || !a.href) return false;
+                if (a.target && a.target !== '_self') return false;
+                if (a.hasAttribute('download')) return false;
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+                if (!isSameOriginLink(a)) return false;
+                const url = new URL(a.href, window.location.href);
+                if (url.hash && url.pathname === window.location.pathname) return false;
+                return true;
+            }
+
+            document.addEventListener('click', function (event) {
+                const a = event.target.closest('a');
+                if (!shouldHandle(a, event)) return;
+
+                // Only animate for auth to auth transitions (login/register).
+                const href = a.getAttribute('href') || '';
+                if (!href.includes('login') && !href.includes('register')) return;
+
+                event.preventDefault();
+                document.body.classList.remove(ENTER_CLASS);
+                document.body.classList.add(LEAVE_CLASS);
+
+                window.setTimeout(() => {
+                    window.location.href = a.href;
+                }, LEAVE_MS);
+            });
+
+            // Back/forward cache: ensure we don't stay faded out.
+            window.addEventListener('pageshow', function () {
+                document.body.classList.remove(LEAVE_CLASS);
+                document.body.classList.add(ENTER_CLASS);
+            });
+        })();
+    </script>
+</body>
+</html>
+

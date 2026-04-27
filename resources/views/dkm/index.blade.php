@@ -1,6 +1,7 @@
-@extends('layouts.main')
+@extends('layouts.app')
 
 @section('content')
+
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
@@ -18,6 +19,60 @@
 .dkm-shell {
     max-width: 1160px;
     margin: 0 auto;
+}
+
+.dkm-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.dkm-toolbar-note {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #557068;
+    max-width: 700px;
+}
+
+.dkm-toolbar-note strong {
+    color: #085041;
+}
+
+.dkm-primary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #085041 0%, #1d9e75 100%);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 16px 32px rgba(8, 80, 65, 0.18);
+    border: 1px solid rgba(8, 80, 65, 0.08);
+}
+
+.dkm-primary-btn:hover {
+    color: #ffffff;
+    text-decoration: none;
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+.dkm-flash {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #eef8f4;
+    border: 1px solid #cee6dc;
+    color: #0a5a46;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 20px;
 }
 
 .dkm-header-card {
@@ -261,6 +316,60 @@
     min-width: 120px;
 }
 
+.dkm-koordinator-block {
+    margin-bottom: 24px;
+}
+
+.dkm-koordinator-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #085041;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5eeea;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dkm-koordinator-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #1d9e75;
+    flex-shrink: 0;
+}
+
+.dkm-seksi-block {
+    margin-bottom: 20px;
+}
+
+.dkm-seksi-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: #0f6e56;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dkm-seksi-label::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #1d9e75;
+    flex-shrink: 0;
+}
+
 .dkm-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(238px, 1fr));
@@ -431,6 +540,7 @@
     transform: translateX(4px);
 }
 
+/* Accent: Gold */
 .dkm-accent-gold .dkm-section-kicker,
 .dkm-accent-gold .dkm-section-count,
 .dkm-accent-gold .dkm-chip {
@@ -438,15 +548,12 @@
     color: #8a6800;
     border: 1px solid #f2df9b;
 }
-
 .dkm-accent-gold .dkm-card-top {
     background: linear-gradient(135deg, #7c5b00 0%, #b68900 50%, #d9ac1d 100%);
 }
+.dkm-accent-gold .dkm-rank-line { color: #8a6800; }
 
-.dkm-accent-gold .dkm-rank-line {
-    color: #8a6800;
-}
-
+/* Accent: Emerald */
 .dkm-accent-emerald .dkm-section-kicker,
 .dkm-accent-emerald .dkm-section-count,
 .dkm-accent-emerald .dkm-chip {
@@ -454,15 +561,12 @@
     color: #0f6e56;
     border: 1px solid #cceade;
 }
-
 .dkm-accent-emerald .dkm-card-top {
     background: linear-gradient(135deg, #085041 0%, #0f6e56 48%, #1d9e75 100%);
 }
+.dkm-accent-emerald .dkm-rank-line { color: #0f6e56; }
 
-.dkm-accent-emerald .dkm-rank-line {
-    color: #0f6e56;
-}
-
+/* Accent: Teal */
 .dkm-accent-teal .dkm-section-kicker,
 .dkm-accent-teal .dkm-section-count,
 .dkm-accent-teal .dkm-chip {
@@ -470,15 +574,12 @@
     color: #0d6772;
     border: 1px solid #cee5ea;
 }
-
 .dkm-accent-teal .dkm-card-top {
     background: linear-gradient(135deg, #0b5360 0%, #127786 48%, #2ca4af 100%);
 }
+.dkm-accent-teal .dkm-rank-line { color: #0d6772; }
 
-.dkm-accent-teal .dkm-rank-line {
-    color: #0d6772;
-}
-
+/* Accent: Mint */
 .dkm-accent-mint .dkm-section-kicker,
 .dkm-accent-mint .dkm-section-count,
 .dkm-accent-mint .dkm-chip {
@@ -486,15 +587,12 @@
     color: #2d8064;
     border: 1px solid #d6efe5;
 }
-
 .dkm-accent-mint .dkm-card-top {
     background: linear-gradient(135deg, #1f6a54 0%, #2d8064 48%, #47aa84 100%);
 }
+.dkm-accent-mint .dkm-rank-line { color: #2d8064; }
 
-.dkm-accent-mint .dkm-rank-line {
-    color: #2d8064;
-}
-
+/* Accent: Slate */
 .dkm-accent-slate .dkm-section-kicker,
 .dkm-accent-slate .dkm-section-count,
 .dkm-accent-slate .dkm-chip {
@@ -502,14 +600,10 @@
     color: #5d7178;
     border: 1px solid #dce4e8;
 }
-
 .dkm-accent-slate .dkm-card-top {
     background: linear-gradient(135deg, #4f646b 0%, #627980 48%, #7f959b 100%);
 }
-
-.dkm-accent-slate .dkm-rank-line {
-    color: #5d7178;
-}
+.dkm-accent-slate .dkm-rank-line { color: #5d7178; }
 
 @media (max-width: 900px) {
     .dkm-head-layout,
@@ -522,17 +616,20 @@
     .dkm-root {
         padding: 20px 16px 40px;
     }
-
+    .dkm-toolbar {
+        align-items: stretch;
+    }
+    .dkm-primary-btn {
+        width: 100%;
+    }
     .dkm-header-card,
     .dkm-section {
         padding: 22px 18px;
         border-radius: 24px;
     }
-
     .dkm-title {
         font-size: 30px;
     }
-
     .dkm-grid,
     .dkm-grid-featured {
         grid-template-columns: 1fr;
@@ -542,6 +639,17 @@
 
 <div class="dkm-root">
     <div class="dkm-shell">
+
+            <a href="{{ route('dkm.create') }}" class="dkm-primary-btn">+ Tambah Anggota</a>
+        </div>
+
+        @if (session('success'))
+            <div class="dkm-flash">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        {{-- ===== HEADER CARD ===== --}}
         <div class="dkm-header-card">
             <div class="dkm-header-content">
                 <div class="dkm-eyebrow">
@@ -586,80 +694,107 @@
                 </div>
             </div>
         </div>
+        {{-- ===== END HEADER CARD ===== --}}
 
+        {{-- ===== COUNT BAR ===== --}}
         <div class="dkm-count-bar">
-            <div class="dkm-count-copy">
-                Struktur ditampilkan <strong>berdasarkan hierarki jabatan</strong>,
-                dimulai dari pimpinan utama hingga anggota pendukung.
-            </div>
-
+            <p class="dkm-count-copy">
+                Menampilkan <strong>{{ $dkm->count() }} anggota</strong> dalam <strong>{{ $dkmSections->count() }} tingkatan</strong> struktur organisasi.
+            </p>
             <div class="dkm-count-pills">
                 <span class="dkm-count-pill">{{ $dkm->count() }} Anggota</span>
                 <span class="dkm-count-pill">{{ $dkmSections->count() }} Tingkatan</span>
             </div>
         </div>
+        {{-- ===== END COUNT BAR ===== --}}
 
+        {{-- ===== SECTIONS ===== --}}
         @foreach($dkmSections as $section)
-            @php
-                $sectionMeta = $section['meta'];
-                $sectionMembers = $section['members'];
-                $sectionKey = $section['key'];
-            @endphp
-            <section class="dkm-section dkm-accent-{{ $sectionMeta['accent'] }}">
-                <div class="dkm-section-head">
-                    <div>
-                        <div class="dkm-section-kicker">{{ $sectionMeta['level'] }}</div>
-                        <h2 class="dkm-section-title">{{ $sectionMeta['title'] }}</h2>
-                        <p class="dkm-section-copy">{{ $sectionMeta['description'] }}</p>
+
+        <section class="dkm-section dkm-accent-{{ $section['meta']['accent'] }}">
+
+            <div class="dkm-section-head">
+                <div>
+                    <div class="dkm-section-kicker">{{ $section['meta']['level'] }}</div>
+                    <h2 class="dkm-section-title">{{ $section['meta']['title'] }}</h2>
+                    <p class="dkm-section-copy">{{ $section['meta']['description'] }}</p>
+                </div>
+
+                <div class="dkm-section-count">
+                    {{ $section['members']->count() }} Anggota
+                </div>
+            </div>
+
+            {{-- LOOP KOORDINATOR --}}
+            @foreach($section['data'] as $koor)
+
+                {{-- KOORDINATOR TITLE --}}
+                @if(filled($koor->nama ?? null))
+                <div style="margin-bottom:15px; font-weight:600;">
+                    {{ $koor->nama }}
+                </div>
+                @endif
+
+                {{-- LOOP SEKSI --}}
+                @foreach($koor->seksi as $seksi)
+
+                    @if(filled($seksi->nama ?? null))
+                    <div style="margin-bottom:10px; color:#666;">
+                        {{ $seksi->nama }}
+                    </div>
+                    @endif
+
+                    <div class="dkm-grid">
+
+                        {{-- LOOP ANGGOTA --}}
+                        @foreach($seksi->dkms as $d)
+
+                            {{-- CARD (TIDAK DIUBAH) --}}
+                            <a href="/dkm/{{ $d->id }}" class="dkm-card">
+
+                                <div class="dkm-card-top">
+                                    <div class="dkm-tier-badge">{{ $section['meta']['level'] }}</div>
+                                    <div class="dkm-badge-ribbon">{{ $section['meta']['ribbon'] }}</div>
+
+                                    <div class="dkm-avatar-wrap">
+                                        @if($d->foto)
+                                            <img src="{{ $d->foto }}" class="dkm-avatar">
+                                        @else
+                                            <div class="dkm-avatar-initials">
+                                                {{ strtoupper(substr($d->nama,0,1)) }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="dkm-card-body">
+                                    <div class="dkm-rank-line">{{ $section['meta']['title'] }}</div>
+                                    <div class="dkm-nama">{{ $d->nama }}</div>
+                                    <div class="dkm-jabatan-text">{{ $d->jabatan }}</div>
+
+                                    <div class="dkm-chip-row">
+                                        <span class="dkm-chip">{{ $d->jabatan }}</span>
+                                        <span class="dkm-chip dkm-chip-soft">{{ $section['meta']['level'] }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="dkm-card-footer">
+                                    Lihat Profil →
+                                </div>
+
+                            </a>
+
+                        @endforeach
                     </div>
 
-                    <div class="dkm-section-count">{{ $sectionMembers->count() }} Anggota</div>
-                </div>
+                @endforeach
 
-                <div class="dkm-grid {{ $sectionKey === 'pimpinan' ? 'dkm-grid-featured' : '' }}">
-                    @foreach($sectionMembers as $d)
-                        @php
-                            $words = explode(' ', $d->nama);
-                            $initials = strtoupper(
-                                (isset($words[0]) ? $words[0][0] : '') .
-                                (isset($words[1]) ? $words[1][0] : '')
-                            );
-                        @endphp
+            @endforeach
 
-                        <a href="/dkm/{{ $d->id }}" class="dkm-card">
-                            <div class="dkm-card-top">
-                                <div class="dkm-tier-badge">{{ $sectionMeta['level'] }}</div>
-                                <div class="dkm-badge-ribbon">{{ $sectionMeta['ribbon'] }}</div>
+        </section>
 
-                                <div class="dkm-avatar-wrap">
-                                    @if($d->foto)
-                                        <img src="{{ $d->foto }}" alt="{{ $d->nama }}" class="dkm-avatar">
-                                    @else
-                                        <div class="dkm-avatar-initials">{{ $initials }}</div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="dkm-card-body">
-                                <div class="dkm-rank-line">{{ $sectionMeta['title'] }}</div>
-                                <div class="dkm-nama">{{ $d->nama }}</div>
-                                <div class="dkm-jabatan-text">{{ $d->jabatan ?? 'Anggota DKM' }}</div>
-
-                                <div class="dkm-chip-row">
-                                    <span class="dkm-chip">{{ $d->jabatan ?? 'Anggota' }}</span>
-                                    <span class="dkm-chip dkm-chip-soft">{{ $sectionMeta['level'] }}</span>
-                                </div>
-                            </div>
-
-                            <div class="dkm-card-footer">
-                                Lihat Profil
-                                <span class="dkm-arrow">→</span>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            </section>
         @endforeach
-    </div>
-</div>
-@endsection
+        {{-- ===== END SECTIONS ===== --}}
+        </div> {{-- dkm-shell --}}
+    </div> {{-- dkm-root --}}
+    @endsection

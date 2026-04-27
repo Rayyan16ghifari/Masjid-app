@@ -30,7 +30,6 @@
 
                     <x-slot name="content">
 
-                        <!-- ❌ PROFILE DIHAPUS -->
 
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -44,7 +43,6 @@
                 </x-dropdown>
             </div>
 
-            <!-- MOBILE BUTTON -->
             <div class="flex items-center -me-2 sm:hidden">
                 <button @click="open = ! open" class="p-2 text-gray-400">
                     ☰

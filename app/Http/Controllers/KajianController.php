@@ -11,18 +11,35 @@ use App\Models\Dkm;
 use App\Models\Pengumuman;
 use App\Models\Donasi;
 use App\Models\User;
-use Midtrans\Snap;
-use Midtrans\Config;
+use App\Models\Kas;
+use App\Models\Koordinator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 
 class KajianController extends Controller
 {
+    private const PRAYER_TIMEZONE = 'Asia/Jakarta';
+    private const PRAYER_METHOD = 20;
+    private const PRAYER_SCHOOL = 0;
+
     /* ================= DASHBOARD ================= */
     public function dashboard()
     {
+        // =========================
+        // WAKTU SHOLAT
+        // =========================
+        $today = $this->prayerNow();
+        $location = $this->prayerLocation();
+        $latitude = $location['latitude'];
+        $longitude = $location['longitude'];
+        
+        $prayerTimes = $this->calculatePrayerTimes($today, $latitude, $longitude);
+        $currentPrayer = $this->getCurrentPrayer($prayerTimes);
+        $nextPrayer = $this->getNextPrayer($prayerTimes);
+
         // =========================
         // KAJIAN TERBARU
         // =========================
@@ -44,7 +61,7 @@ class KajianController extends Controller
         // =========================
         // VIDEO KAJIAN
         // =========================
-        $videos = Video::latest()
+        $videos = \App\Models\Video::latest()
             ->take(6)
             ->get();
 
@@ -93,21 +110,25 @@ class KajianController extends Controller
             ->get();
 
         // =========================
-        // RETURN VIEW (FIX DI SINI)
+        // RETURN VIEW (USER DASHBOARD)
         // =========================
         return view('dashboard', compact(
+            'prayerTimes',
+            'currentPrayer',
+            'nextPrayer',
+            'today',
             'kajianTerbaru',
             'kajianTrending',
             'videos',
-            'dkm',
-            'totalDkm',
             'totalJamaah',
             'totalKajian',
             'totalRating',
             'totalDonasi',
             'totalTransaksiDonasi',
+            'totalDkm',
+            'dkm',
             'jadwal',
-            'pengumuman' // 🔥 WAJIB ADA
+            'pengumuman'
         ));
     }
 
@@ -214,180 +235,87 @@ class KajianController extends Controller
     public function rekomendasi()
     {
         $userId = Auth::id();
-        $allKajian = Kajian::with(['ustadz', 'kitab'])
-            ->withAvg('ratings', 'rating')
-            ->get()
-            ->keyBy('id');
-
-        $userRatings = Rating::with('kajian.kitab')
-            ->where('user_id', $userId)
-            ->get();
-
-        $ratedKajianIds = $userRatings
-            ->pluck('kajian_id')
-            ->flip();
-
-        $preferredCategories = [];
-
-        foreach ($userRatings->where('rating', '>=', 3) as $rating) {
-            $kategori = $this->resolveKajianKategori($rating->kajian);
-            $preferredCategories[$kategori] = ($preferredCategories[$kategori] ?? 0) + max(((int) $rating->rating) - 2, 1);
-        }
-
-        arsort($preferredCategories);
-
-        $allRatings = Rating::with(['kajian.ustadz', 'kajian.kitab'])
-            ->get();
-
-        $userVector = $allRatings
-            ->where('user_id', $userId)
-            ->pluck('rating', 'kajian_id');
-
-        $similarity = [];
-
-        foreach ($allRatings->groupBy('user_id') as $otherUserId => $items) {
-            if ((int) $otherUserId === (int) $userId) {
-                continue;
-            }
-
-            $otherVector = $items->pluck('rating', 'kajian_id');
-            $commonKeys = array_intersect(array_keys($userVector->all()), array_keys($otherVector->all()));
-
-            if (count($commonKeys) === 0) {
-                continue;
-            }
-
-            $dot = 0;
-            $normA = 0;
-            $normB = 0;
-
-            foreach ($commonKeys as $key) {
-                $a = (int) $userVector[$key];
-                $b = (int) $otherVector[$key];
-                $dot += $a * $b;
-                $normA += $a * $a;
-                $normB += $b * $b;
-            }
-
-            if ($normA > 0 && $normB > 0) {
-                $score = $dot / (sqrt($normA) * sqrt($normB));
-
-                if ($score > 0) {
-                    $similarity[$otherUserId] = $score;
-                }
-            }
-        }
-
-        arsort($similarity);
-
-        $collaborativeRaw = [];
-        $collaborativeSupport = [];
-
-        foreach ($similarity as $otherUserId => $score) {
-            foreach ($allRatings->where('user_id', $otherUserId)->where('rating', '>=', 3) as $rating) {
-                if ($ratedKajianIds->has($rating->kajian_id)) {
-                    continue;
-                }
-
-                $collaborativeRaw[$rating->kajian_id] = ($collaborativeRaw[$rating->kajian_id] ?? 0) + ($score * (int) $rating->rating);
-                $collaborativeSupport[$rating->kajian_id] = ($collaborativeSupport[$rating->kajian_id] ?? 0) + 1;
-            }
-        }
-
-        $contentRaw = [];
-
-        foreach ($allKajian as $kajianId => $kajian) {
-            if ($ratedKajianIds->has($kajianId)) {
-                continue;
-            }
-
-            $kategori = $this->resolveKajianKategori($kajian);
-            $contentRaw[$kajianId] = $preferredCategories[$kategori] ?? 0;
-        }
-
-        $collaborativeScores = $this->normalizeScoreMap($collaborativeRaw);
-        $contentScores = $this->normalizeScoreMap(array_filter($contentRaw, fn ($score) => $score > 0));
-
-        $candidateIds = collect(array_unique(array_merge(
-            array_keys($collaborativeScores),
-            array_keys($contentScores)
-        )));
-
-        $recommended = $candidateIds
-            ->map(function ($kajianId) use ($allKajian, $collaborativeScores, $contentScores, $collaborativeSupport, $preferredCategories) {
-                $kajian = $allKajian->get($kajianId);
-
-                if (!$kajian) {
-                    return null;
-                }
-
-                $kategori = $this->resolveKajianKategori($kajian);
-                $collaborativeScore = $collaborativeScores[$kajianId] ?? 0;
-                $contentScore = $contentScores[$kajianId] ?? 0;
-                $popularityBoost = min(((float) ($kajian->ratings_avg_rating ?? 0)) / 5, 1) * 0.1;
-                $hybridScore = ($collaborativeScore * 0.55) + ($contentScore * 0.35) + $popularityBoost;
-
-                $source = 'Hybrid AI';
-                $reason = 'Kajian ini dipilih dari kombinasi selera kategori dan pola rating jamaah yang mirip denganmu.';
-
-                if ($contentScore > 0 && $collaborativeScore <= 0) {
-                    $source = 'Content-Based';
-                    $reason = 'Karena kamu suka ' . strtolower($kategori) . ', sistem memprioritaskan kajian dari kategori yang sama.';
-                } elseif ($contentScore <= 0 && $collaborativeScore > 0) {
-                    $source = 'Collaborative Filtering';
-                    $reason = 'Jamaah dengan pola rating yang mirip memberikan nilai baik pada kajian ini.';
-                } elseif ($contentScore > 0 && $collaborativeScore > 0) {
-                    $reason = 'Karena kamu suka ' . strtolower($kategori) . ', lalu preferensi itu diperkuat oleh rating jamaah dengan selera serupa.';
-                }
-
-                $kajian->setAttribute('kategori_label', $kategori);
-                $kajian->setAttribute('recommendation_source', $source);
-                $kajian->setAttribute('recommendation_reason', $reason);
-                $kajian->setAttribute('hybrid_score', (int) round($hybridScore * 100));
-                $kajian->setAttribute('collaborative_score', (int) round($collaborativeScore * 100));
-                $kajian->setAttribute('content_score', (int) round($contentScore * 100));
-                $kajian->setAttribute('support_count', $collaborativeSupport[$kajianId] ?? 0);
-                $kajian->setAttribute('category_weight', $preferredCategories[$kategori] ?? 0);
-
-                return $kajian;
-            })
-            ->filter()
-            ->sortByDesc('hybrid_score')
-            ->take(8)
-            ->values();
-
-        $recommendationMode = 'hybrid';
-
-        if ($recommended->isEmpty()) {
-            $recommendationMode = 'popular';
-
-            $recommended = $allKajian
-                ->reject(fn ($kajian) => $ratedKajianIds->has($kajian->id))
-                ->sortByDesc(fn ($kajian) => (float) ($kajian->ratings_avg_rating ?? 0))
-                ->take(6)
-                ->values()
-                ->map(function ($kajian) {
-                    $kategori = $this->resolveKajianKategori($kajian);
-
-                    $kajian->setAttribute('kategori_label', $kategori);
-                    $kajian->setAttribute('recommendation_source', 'Popular Picks');
-                    $kajian->setAttribute('recommendation_reason', 'Belum ada cukup data preferensi, jadi sistem menampilkan kajian populer dengan rating tinggi terlebih dahulu.');
-                    $kajian->setAttribute('hybrid_score', (int) round(min(((float) ($kajian->ratings_avg_rating ?? 0)) / 5, 1) * 100));
-                    $kajian->setAttribute('collaborative_score', 0);
-                    $kajian->setAttribute('content_score', 0);
-                    $kajian->setAttribute('support_count', 0);
-                    $kajian->setAttribute('category_weight', 0);
-
+        $cfService = new \App\Services\CollaborativeFilteringService();
+        
+        try {
+            // Dapatkan rekomendasi menggunakan hybrid CF
+            $recommendationIds = $cfService->getHybridRecommendations($userId, 10);
+            
+            // Load data kajian yang direkomendasikan
+            $recommended = Kajian::with(['ustadz', 'kitab'])
+                ->withAvg('ratings', 'rating')
+                ->withCount('ratings')
+                ->whereIn('id', array_keys($recommendationIds))
+                ->get()
+                ->map(function ($kajian) use ($recommendationIds) {
+                    $kajian->predicted_rating = round($recommendationIds[$kajian->id] ?? 0, 2);
+                    $kajian->kategori = $this->resolveKajianKategori($kajian);
                     return $kajian;
-                });
+                })
+                ->sortByDesc('predicted_rating')
+                ->values();
+
+            // Dapatkan preferensi kategori user
+            $userRatings = Rating::with('kajian.kitab')
+                ->where('user_id', $userId)
+                ->get();
+
+            $preferredCategories = [];
+            foreach ($userRatings->where('rating', '>=', 3) as $rating) {
+                $kategori = $this->resolveKajianKategori($rating->kajian);
+                $preferredCategories[$kategori] = ($preferredCategories[$kategori] ?? 0) + max(((int) $rating->rating) - 2, 1);
+            }
+            arsort($preferredCategories);
+
+            // Evaluasi sistem (untuk development/testing)
+            $evaluation = $cfService->evaluateRecommendations($userId);
+
+            // Hitung jumlah similar users dari evaluation atau dari service
+            $similarUsersCount = isset($evaluation['similar_users']) ? $evaluation['similar_users'] : 0;
+            
+            return view('kajian.rekomendasi', [
+                'recommended' => $recommended,
+                'preferredCategories' => collect($preferredCategories)->take(3),
+                'userRatingsCount' => $userRatings->count(),
+                'similarUsersCount' => $similarUsersCount,
+                'evaluation' => $evaluation,
+                'algorithm' => 'Hybrid Collaborative Filtering (User-Based + Item-Based)',
+                'recommendationMode' => 'hybrid',
+            ]);
+            
+        } catch (\Exception $e) {
+            // Fallback ke rekomendasi populer jika terjadi error
+            return $this->getPopularRecommendations($userId);
         }
+    }
+
+    private function getPopularRecommendations($userId)
+    {
+        $userRatings = Rating::where('user_id', $userId)->pluck('kajian_id');
+        
+        $recommended = Kajian::with(['ustadz', 'kitab'])
+            ->withAvg('ratings', 'rating')
+            ->withCount('ratings')
+            ->whereNotIn('id', $userRatings)
+            ->having('ratings_count', '>=', 3)
+            ->orderByDesc('ratings_avg_rating')
+            ->orderByDesc('ratings_count')
+            ->limit(10)
+            ->get()
+            ->map(function ($kajian) {
+                $kajian->predicted_rating = $kajian->ratings_avg_rating ?? 0;
+                $kajian->kategori = $this->resolveKajianKategori($kajian);
+                return $kajian;
+            });
 
         return view('kajian.rekomendasi', [
             'recommended' => $recommended,
-            'preferredCategories' => collect($preferredCategories)->take(3),
+            'preferredCategories' => collect([]),
             'userRatingsCount' => $userRatings->count(),
-            'similarUsersCount' => count($similarity),
-            'recommendationMode' => $recommendationMode,
+            'similarUsersCount' => 0,
+            'evaluation' => ['rmse' => 0, 'mae' => 0, 'coverage' => 0],
+            'algorithm' => 'Popular-based (Fallback)',
+            'recommendationMode' => 'popular',
         ]);
     }
 
@@ -400,19 +328,71 @@ class KajianController extends Controller
 
     public function strukturOrganisasi()
     {
-        return view('dkm.index', $this->buildDkmViewData([
-            'pageEyebrow' => 'Struktur Organisasi Masjid',
-            'pageTitle' => 'Struktur Organisasi DKM Masjid Al-Hasanah',
-            'pageSubtitle' => 'Susunan organisasi ditampilkan lebih formal untuk memperjelas garis koordinasi, tingkatan jabatan, dan pembagian tanggung jawab di lingkungan masjid.',
-            'pageNoteTitle' => 'Visual organisasi lebih formal',
-            'pageNoteCopy' => 'Halaman ini menekankan susunan kepengurusan dari pimpinan utama hingga unit pelayanan, sehingga lebih layak ditampilkan sebagai struktur organisasi resmi.',
-        ]));
+        return redirect()->route('dkm.index');
     }
 
     public function dkmDetail($id)
     {
         $d = Dkm::findOrFail($id);
         return view('dkm.show', compact('d'));
+    }
+
+    // ================= CREATE =================
+    public function dkmCreate()
+    {
+        return view('dkm.create', $this->dkmFormViewData());
+    }
+
+    // ================= STORE =================
+    public function dkmStore(Request $request)
+    {
+        $payload = $this->sanitizeDkmPayload(
+            $request->validate($this->dkmValidationRules())
+        );
+
+        $member = Dkm::create($payload);
+
+        return redirect()
+            ->route('dkm.show', $member->id)
+            ->with('success', 'Data anggota DKM berhasil ditambahkan.');
+    }
+
+    // ================= EDIT =================
+    public function dkmEdit($id)
+    {
+        $d = Dkm::findOrFail($id);
+
+        return view('dkm.edit', array_merge(
+            ['d' => $d],
+            $this->dkmFormViewData()
+        ));
+    }
+
+    // ================= UPDATE =================
+    public function dkmUpdate(Request $request, $id)
+    {
+        $d = Dkm::findOrFail($id);
+
+        $payload = $this->sanitizeDkmPayload(
+            $request->validate($this->dkmValidationRules())
+        );
+
+        $d->update($payload);
+
+        return redirect()
+            ->route('dkm.show', $d->id)
+            ->with('success', 'Data anggota DKM berhasil diperbarui.');
+    }
+
+    // ================= DELETE =================
+    public function dkmDestroy($id)
+    {
+        $d = Dkm::findOrFail($id);
+        $d->delete();
+
+        return redirect()
+            ->route('dkm.index')
+            ->with('success', 'Data anggota DKM berhasil dihapus.');
     }
 
     public function kontak()
@@ -491,33 +471,481 @@ class KajianController extends Controller
         return view('faq.index', compact('faqItems'));
     }
 
+    public function galeri()
+    {
+        // Fetch real gallery data from database
+        $galleries = \App\Models\Gallery::latest()->get();
+        
+        // Convert to the format expected by the view
+        $galleryPhotos = [];
+        
+        foreach ($galleries as $gallery) {
+            $galleryPhotos[] = [
+                'src' => 'images/gallery/' . $gallery->gambar,
+                'title' => $gallery->judul,
+                'date' => $gallery->created_at->format('Y-m-d'),
+                'category' => ucfirst($gallery->kategori)
+            ];
+        }
+        
+        // If no gallery data, provide fallback
+        if (empty($galleryPhotos)) {
+            $galleryPhotos = [
+                [
+                    'src' => 'images/masjid/Masjid1.jpg',
+                    'title' => 'Masjid Al-Hasanah - Tampak Depan',
+                    'date' => '2026-04-15',
+                    'category' => 'Bangunan'
+                ],
+                [
+                    'src' => 'images/masjid/Masjid2.jpg',
+                    'title' => 'Halaman Luar Masjid',
+                    'date' => '2026-04-10',
+                    'category' => 'Area Masjid'
+                ],
+            ];
+        }
+
+        // Group photos by month for better organization
+        $groupedPhotos = collect($galleryPhotos)->groupBy(function ($photo) {
+            return date('F Y', strtotime($photo['date']));
+        });
+
+        return view('galeri.index', compact('galleryPhotos', 'groupedPhotos'));
+    }
+
+    public function waktuSholat()
+    {
+        // Get current date and location (East Jakarta)
+        $today = $this->prayerNow();
+        $location = $this->prayerLocation();
+        $latitude = $location['latitude'];
+        $longitude = $location['longitude'];
+        
+        // Calculate prayer times (simplified calculation for demo)
+        $prayerTimes = $this->calculatePrayerTimes($today, $latitude, $longitude);
+        
+        // Get current prayer
+        $currentPrayer = $this->getCurrentPrayer($prayerTimes);
+        
+        // Get next prayer
+        $nextPrayer = $this->getNextPrayer($prayerTimes);
+        
+        return view('waktu-sholat.index', compact(
+            'prayerTimes', 
+            'currentPrayer', 
+            'nextPrayer', 
+            'today'
+        ));
+    }
+
+    private function calculatePrayerTimes($date, $latitude, $longitude)
+    {
+        $date = $date->copy()->timezone(self::PRAYER_TIMEZONE);
+
+        $timings = $this->fetchPrayerTimingsByCoordinates($date, $latitude, $longitude)
+            ?? $this->fetchPrayerTimingsByAddress($date);
+
+        if (is_array($timings)) {
+            return $this->buildPrayerTimes($timings);
+        }
+
+        return $this->fallbackPrayerTimes($date);
+
+        // Try to get real prayer times from API with proper Jakarta timezone
+        try {
+            // Use coordinates for Jakarta and proper method
+            $response = Http::get("http://api.aladhan.com/v1/timings", [
+                'latitude' => -6.2088,
+                'longitude' => 106.8456,
+                'method' => 2, // Muslim World League
+                'adjustments' => '1', // Adjust for Jakarta timezone (GMT+7)
+                'school' => 0 // Shafi'i (standard for Indonesia)
+            ]);
+
+            if ($response->successful()) {
+                $timings = $response['data']['timings'];
+                
+                // Convert 24-hour format to ensure proper display
+                $convertTime = function($time) {
+                    return date('H:i', strtotime($time));
+                };
+                
+                // Only return 5 prayer times like Istiqlal website with proper icons
+                return [
+                    'subuh' => [
+                        'name' => 'Subuh',
+                        'time' => $convertTime($timings['Fajr']),
+                        'icon' => '🌅',
+                        'description' => 'Waktu sholat Subuh'
+                    ],
+                    'dzuhur' => [
+                        'name' => 'Dzuhur',
+                        'time' => $convertTime($timings['Dhuhr']),
+                        'icon' => '☀️',
+                        'description' => 'Waktu sholat Dzuhur'
+                    ],
+                    'ashar' => [
+                        'name' => 'Ashar',
+                        'time' => $convertTime($timings['Asr']),
+                        'icon' => '�️',
+                        'description' => 'Waktu sholat Ashar'
+                    ],
+                    'magrib' => [
+                        'name' => 'Magrib',
+                        'time' => $convertTime($timings['Maghrib']),
+                        'icon' => '🌆',
+                        'description' => 'Waktu sholat Magrib'
+                    ],
+                    'isya' => [
+                        'name' => 'Isya',
+                        'time' => $convertTime($timings['Isha']),
+                        'icon' => '🌙',
+                        'description' => 'Waktu sholat Isya'
+                    ]
+                ];
+            }
+        } catch (\Exception $e) {
+            // Fallback to calculation if API fails
+        }
+
+        // Fallback calculation - accurate Jakarta prayer times for today
+        // Based on typical Jakarta prayer times for current date
+        $currentHour = now()->hour;
+        
+        // Use realistic Jakarta prayer times
+        $times = [
+            'subuh' => '04:24',
+            'dzuhur' => '11:47', 
+            'ashar' => '15:02',
+            'magrib' => '17:51',
+            'isya' => '19:02'
+        ];
+
+        return [
+            'subuh' => [
+                'name' => 'Subuh',
+                'time' => $times['subuh'],
+                'icon' => '�',
+                'description' => 'Waktu sholat Subuh'
+            ],
+            'dzuhur' => [
+                'name' => 'Dzuhur',
+                'time' => $times['dzuhur'],
+                'icon' => '☀️',
+                'description' => 'Waktu sholat Dzuhur'
+            ],
+            'ashar' => [
+                'name' => 'Ashar',
+                'time' => $times['ashar'],
+                'icon' => '�️',
+                'description' => 'Waktu sholat Ashar'
+            ],
+            'magrib' => [
+                'name' => 'Magrib',
+                'time' => $times['magrib'],
+                'icon' => '🌆',
+                'description' => 'Waktu sholat Magrib'
+            ],
+            'isya' => [
+                'name' => 'Isya',
+                'time' => $times['isya'],
+                'icon' => '🌙',
+                'description' => 'Waktu sholat Isya'
+            ]
+        ];
+    }
+
+    private function calculateDhuhaTime($sunriseTime)
+    {
+        // Dhuha is typically 20-45 minutes after sunrise
+        $sunrise = \Carbon\Carbon::createFromFormat('H:i', $sunriseTime);
+        return $sunrise->addMinutes(30)->format('H:i');
+    }
+
+    private function timeFromAngle($date, $angle, $latitude, $longitude, $isSunset = false)
+    {
+        // Simplified calculation - in production use proper astronomical calculations
+        $baseTime = $isSunset ? '18:00' : '04:30';
+        
+        // Adjust based on prayer type
+        $adjustments = [
+            'imsak' => '-10 minutes',
+            'subuh' => '0 minutes',
+            'terbit' => '+20 minutes',
+            'dhuha' => '+45 minutes',
+            'dzuhur' => '+6 hours 30 minutes',
+            'ashar' => '+8 hours 15 minutes',
+            'magrib' => '+6 hours 15 minutes',
+            'isya' => '+7 hours 30 minutes'
+        ];
+
+        $baseDateTime = $date->copy()->setTimeFromTimeString($baseTime);
+        
+        // Apply adjustments based on prayer type
+        if ($angle === -18) return $baseDateTime->format('H:i');
+        if ($angle === -0.8333 && !$isSunset) return $baseDateTime->addMinutes(20)->format('H:i');
+        if ($angle === 10) return $baseDateTime->addMinutes(45)->format('H:i');
+        if ($angle === -17 && $isSunset) return $baseDateTime->addHours(7)->addMinutes(30)->format('H:i');
+        
+        return $baseDateTime->format('H:i');
+    }
+
+    private function calculateDzuhurTime($date, $longitude)
+    {
+        // Dzuhur is when the sun is at its highest point
+        $noon = $date->copy()->setTime(12, 0);
+        // Adjust for longitude (Jakarta is GMT+7)
+        $adjustment = ($longitude / 15) * 60; // Convert longitude to time
+        return $noon->addMinutes($adjustment + 30)->format('H:i');
+    }
+
+    private function calculateAsharTime($date, $latitude, $longitude)
+    {
+        // Ashar is typically 1.5 to 2 shadow lengths
+        $dzuhurTime = $this->calculateDzuhurTime($date, $longitude);
+        $dzuhurDateTime = $date->copy()->setTimeFromTimeString($dzuhurTime);
+        return $dzuhurDateTime->addHours(2)->addMinutes(15)->format('H:i');
+    }
+
+    private function getCurrentPrayer($prayerTimes)
+    {
+        $now = $this->prayerNow()->format('H:i');
+        $current = null;
+        
+        // Define prayer order for proper logic
+        $prayerOrder = ['subuh', 'dzuhur', 'ashar', 'magrib', 'isya'];
+        
+        foreach ($prayerOrder as $key) {
+            if (isset($prayerTimes[$key])) {
+                if ($now >= $prayerTimes[$key]['time']) {
+                    $current = $key;
+                } else {
+                    break;
+                }
+            }
+        }
+        
+        // If current time is before all prayers, return the last prayer from yesterday
+        return $current ?? 'isya';
+    }
+
+    private function getNextPrayer($prayerTimes)
+    {
+        $now = $this->prayerNow()->format('H:i');
+        
+        // Define prayer order for proper logic
+        $prayerOrder = ['subuh', 'dzuhur', 'ashar', 'magrib', 'isya'];
+        
+        foreach ($prayerOrder as $key) {
+            if (isset($prayerTimes[$key])) {
+                if ($now < $prayerTimes[$key]['time']) {
+                    return $key;
+                }
+            }
+        }
+        
+        // If no prayer is left today, return tomorrow's first prayer
+        return 'subuh';
+    }
+
+    private function prayerNow(): Carbon
+    {
+        return now(self::PRAYER_TIMEZONE);
+    }
+
+    private function prayerLocation(): array
+    {
+        return [
+            'label' => 'Jakarta Timur, DKI Jakarta, Indonesia',
+            'latitude' => -6.225014,
+            'longitude' => 106.900447,
+        ];
+    }
+
+    private function fetchPrayerTimingsByAddress(Carbon $date): ?array
+    {
+        $location = $this->prayerLocation();
+
+        return $this->requestPrayerTimings('https://api.aladhan.com/v1/timingsByAddress/' . $date->format('d-m-Y'), [
+            'address' => $location['label'],
+            'method' => self::PRAYER_METHOD,
+            'school' => self::PRAYER_SCHOOL,
+        ]);
+    }
+
+    private function fetchPrayerTimingsByCoordinates(Carbon $date, float $latitude, float $longitude): ?array
+    {
+        return $this->requestPrayerTimings('https://api.aladhan.com/v1/timings/' . $date->format('d-m-Y'), [
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'method' => self::PRAYER_METHOD,
+            'school' => self::PRAYER_SCHOOL,
+        ]);
+    }
+
+    private function requestPrayerTimings(string $url, array $query): ?array
+    {
+        try {
+            $response = Http::acceptJson()
+                ->timeout(8)
+                ->retry(2, 500)
+                ->get($url, $query);
+
+            $timings = data_get($response->json(), 'data.timings');
+
+            return is_array($timings) ? $timings : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function buildPrayerTimes(array $timings): array
+    {
+        $definitions = [
+            'subuh' => ['name' => 'Subuh', 'api_key' => 'Fajr', 'icon' => 'subuh'],
+            'dzuhur' => ['name' => 'Dzuhur', 'api_key' => 'Dhuhr', 'icon' => 'dzuhur'],
+            'ashar' => ['name' => 'Ashar', 'api_key' => 'Asr', 'icon' => 'ashar'],
+            'magrib' => ['name' => 'Magrib', 'api_key' => 'Maghrib', 'icon' => 'magrib'],
+            'isya' => ['name' => 'Isya', 'api_key' => 'Isha', 'icon' => 'isya'],
+        ];
+
+        $prayerTimes = [];
+
+        foreach ($definitions as $key => $definition) {
+            $time = data_get($timings, $definition['api_key']);
+
+            if (! is_string($time)) {
+                return $this->fallbackPrayerTimes($this->prayerNow());
+            }
+
+            $prayerTimes[$key] = [
+                'name' => $definition['name'],
+                'time' => $this->normalizePrayerTime($time),
+                'icon' => $definition['icon'],
+                'description' => 'Waktu sholat ' . $definition['name'],
+            ];
+        }
+
+        return $prayerTimes;
+    }
+
+    private function normalizePrayerTime(string $time): string
+    {
+        if (preg_match('/(\d{1,2}):(\d{2})/', $time, $matches) === 1) {
+            return sprintf('%02d:%02d', (int) $matches[1], (int) $matches[2]);
+        }
+
+        try {
+            return Carbon::parse($time, self::PRAYER_TIMEZONE)->format('H:i');
+        } catch (\Throwable $e) {
+            return $time;
+        }
+    }
+
+    private function fallbackPrayerTimes(Carbon $date): array
+    {
+        $month = (int) $date->copy()->timezone(self::PRAYER_TIMEZONE)->format('n');
+
+        $fallbackByMonth = [
+            1 => ['04:25', '11:59', '15:25', '18:09', '19:22'],
+            2 => ['04:31', '12:02', '15:26', '18:11', '19:22'],
+            3 => ['04:36', '11:58', '15:19', '18:02', '19:11'],
+            4 => ['04:34', '11:51', '15:12', '17:48', '18:59'],
+            5 => ['04:36', '11:48', '15:09', '17:45', '18:54'],
+            6 => ['04:38', '11:49', '15:11', '17:47', '18:56'],
+            7 => ['04:41', '11:54', '15:15', '17:51', '19:00'],
+            8 => ['04:39', '11:55', '15:16', '17:52', '19:00'],
+            9 => ['04:31', '11:49', '15:06', '17:42', '18:50'],
+            10 => ['04:19', '11:37', '14:54', '17:31', '18:40'],
+            11 => ['04:09', '11:33', '14:55', '17:33', '18:44'],
+            12 => ['04:11', '11:45', '15:10', '17:49', '19:01'],
+        ];
+
+        [$subuh, $dzuhur, $ashar, $magrib, $isya] = $fallbackByMonth[$month] ?? $fallbackByMonth[4];
+
+        return [
+            'subuh' => [
+                'name' => 'Subuh',
+                'time' => $subuh,
+                'icon' => 'subuh',
+                'description' => 'Waktu sholat Subuh',
+            ],
+            'dzuhur' => [
+                'name' => 'Dzuhur',
+                'time' => $dzuhur,
+                'icon' => 'dzuhur',
+                'description' => 'Waktu sholat Dzuhur',
+            ],
+            'ashar' => [
+                'name' => 'Ashar',
+                'time' => $ashar,
+                'icon' => 'ashar',
+                'description' => 'Waktu sholat Ashar',
+            ],
+            'magrib' => [
+                'name' => 'Magrib',
+                'time' => $magrib,
+                'icon' => 'magrib',
+                'description' => 'Waktu sholat Magrib',
+            ],
+            'isya' => [
+                'name' => 'Isya',
+                'time' => $isya,
+                'icon' => 'isya',
+                'description' => 'Waktu sholat Isya',
+            ],
+        ];
+    }
+
     private function buildDkmViewData(array $overrides = []): array
     {
         $sectionMeta = $this->dkmSectionMeta();
 
         $dkm = Dkm::get()
             ->sortBy(function ($member) {
-                $sectionOrder = $this->dkmSectionOrder($member->jabatan);
+                $sectionOrder = $this->dkmSectionOrderForMember($member);
+                $coordinatorOrder = $this->normalizeDkmJabatan($this->dkmCoordinatorLabel($member));
+                $seksiOrder = $this->normalizeDkmJabatan($this->dkmSeksiLabel($member));
                 $jabatanOrder = $this->dkmJabatanRank($member->jabatan);
                 $namaOrder = strtolower($member->nama ?? '');
 
-                return sprintf('%03d-%03d-%s', $sectionOrder, $jabatanOrder, $namaOrder);
+                return sprintf('%03d-%s-%s-%03d-%s', $sectionOrder, $coordinatorOrder, $seksiOrder, $jabatanOrder, $namaOrder);
             })
             ->values();
 
         $dkmSections = collect($sectionMeta)
             ->map(function ($meta, $key) use ($dkm) {
                 $members = $dkm
-                    ->filter(fn ($member) => $this->dkmSectionKey($member->jabatan) === $key)
+                    ->filter(fn ($member) => $this->dkmSectionKeyForMember($member) === $key)
                     ->values();
 
                 if ($members->isEmpty()) {
                     return null;
                 }
 
+                $sectionData = $members
+                    ->groupBy(fn ($member) => $this->dkmCoordinatorLabel($member))
+                    ->map(function ($coordinatorMembers, $coordinatorLabel) {
+                        return (object) [
+                            'nama' => $coordinatorLabel,
+                            'seksi' => $coordinatorMembers
+                                ->groupBy(fn ($member) => $this->dkmSeksiLabel($member))
+                                ->map(function ($seksiMembers, $seksiLabel) {
+                                    return (object) [
+                                        'nama' => $seksiLabel,
+                                        'dkms' => $seksiMembers->values(),
+                                    ];
+                                })
+                                ->values(),
+                        ];
+                    })
+                    ->values();
+
                 return [
                     'key' => $key,
                     'meta' => $meta,
+                    'data' => $sectionData,
                     'members' => $members,
                 ];
             })
@@ -538,6 +966,122 @@ class KajianController extends Controller
             'pageNoteTitle' => 'Hierarki organisasi lebih jelas',
             'pageNoteCopy' => 'Setiap bagian disusun dari jabatan tertinggi ke lapisan pendukung agar struktur kerja DKM terasa lebih profesional dan mudah dibaca jamaah.',
         ], $overrides);
+    }
+
+    private function dkmFormViewData(): array
+    {
+        return [
+            'coordinatorOptions' => $this->dkmCoordinatorOptions(),
+            'jabatanOptions' => $this->dkmJabatanOptions(),
+        ];
+    }
+
+    private function dkmValidationRules(): array
+    {
+        return [
+            'nama' => ['required', 'string', 'max:255'],
+            'jabatan' => ['required', 'string', 'max:255'],
+            'bio' => ['nullable', 'string', 'max:255'],
+            'foto' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'no_hp' => ['nullable', 'string', 'max:255'],
+            'alamat' => ['nullable', 'string'],
+            'seksi_id' => ['nullable', 'integer'],
+        ];
+    }
+
+    private function sanitizeDkmPayload(array $payload): array
+    {
+        foreach ($payload as $key => $value) {
+            if (is_string($value)) {
+                $payload[$key] = trim($value);
+            }
+        }
+
+        foreach (['bio', 'foto', 'email', 'no_hp', 'alamat', 'seksi_id'] as $field) {
+            if (!array_key_exists($field, $payload)) {
+                continue;
+            }
+
+            if ($payload[$field] === '') {
+                $payload[$field] = null;
+            }
+        }
+
+        return $payload;
+    }
+
+    private function dkmCoordinatorOptions(): array
+    {
+        $defaults = [
+            'Penasehat DKM 2026',
+            'Pengurus inti DKM 2026',
+            'Koordinator Keagamaan/Ibadah',
+            'Koordinator Keamanan',
+            'Koordinator Pembangunan',
+            'Koordinator Perlengkapan & Kebersihan',
+            'Koordinator Hubungan Masyarakat & Informasi',
+        ];
+
+        return collect($defaults)
+            ->merge(
+                Dkm::query()
+                    ->whereNotNull('bio')
+                    ->pluck('bio')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->filter()
+            )
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    private function dkmJabatanOptions(): array
+    {
+        $defaults = [
+            'Pelindung',
+            'Penanggung Jawab',
+            'Penasehat',
+            'Ketua',
+            'Wakil Ketua',
+            'Sekretaris',
+            'Wakil Sekretaris',
+            'Bendahara',
+            'Wakil Bendahara',
+            'Imam Muqim',
+            'Imam Rawatib',
+            'Seksi Majelis Taklim',
+            'Seksi Guru Ngaji TPA & ZIS',
+            'Seksi Pemulasaran Jenazah',
+            'Seksi Muadzin',
+            'Seksi Qurban',
+            'Seksi Umum',
+            'Seksi Ketertiban Ibadah',
+            'Seksi Parkir Kendaraan',
+            'Seksi Harwat/Renovasi',
+            'Seksi Marbot & Kelistrikan',
+            'Seksi Umum & Pemotongan Rumput',
+            'Seksi Perlengkapan Jenazah',
+            'Seksi Perlengkapan Masjid',
+            'Seksi Kebersihan Sektor Dalam',
+            'Seksi Kebersihan Sektor Serambi',
+            'Seksi Kebersihan Sektor Luar',
+            'Seksi Hubungan Masyarakat',
+            'Seksi Informasi & Teknologi',
+            'Seksi Tata Suara/Sound System',
+        ];
+
+        return collect($defaults)
+            ->merge(
+                Dkm::query()
+                    ->whereNotNull('jabatan')
+                    ->pluck('jabatan')
+                    ->map(fn ($value) => trim((string) $value))
+                    ->filter()
+            )
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function kajianCategoryOptions(): array
@@ -629,26 +1173,133 @@ class KajianController extends Controller
         return $normalized;
     }
 
+    public function adminDashboard()
+    {
+        // Real-time statistics for admin dashboard
+        $stats = [
+            'total_users' => \App\Models\User::count(),
+            'total_kajian' => \App\Models\Kajian::count(),
+            'total_videos' => \App\Models\Video::count(),
+            'total_media' => \App\Models\Gallery::count(),
+            'total_dkm' => \App\Models\Dkm::count(),
+            'total_donasi' => \App\Models\Donasi::count(),
+        ];
+
+        // User growth data
+        $userGrowthData = [];
+        $totalUsers = 0;
+        for ($i = 6; $i >= 0; $i--) {
+            $date = now()->subDays($i);
+            $newUsers = \App\Models\User::whereDate('created_at', $date)->count();
+            $totalUsers += $newUsers;
+            
+            $userGrowthData[] = [
+                'date' => $date->format('Y-m-d'),
+                'new_users' => $newUsers,
+                'total_users' => $totalUsers
+            ];
+        }
+
+        // Kajian categories
+        $kajianCategories = \App\Models\Kajian::selectRaw('kategori, COUNT(*) as count')
+            ->groupBy('kategori')
+            ->get()
+            ->pluck('count', 'kategori')
+            ->toArray();
+
+        // User roles
+        $userRoles = [
+            'admin' => \App\Models\User::where('role', 'admin')->count(),
+            'user' => \App\Models\User::where('role', 'user')->count(),
+        ];
+
+        // DKM structure
+        $dkmStructure = [
+            'Ketua' => \App\Models\Dkm::where('jabatan', 'Ketua')->count(),
+            'Wakil Ketua' => \App\Models\Dkm::where('jabatan', 'Wakil Ketua')->count(),
+            'Sekretaris' => \App\Models\Dkm::where('jabatan', 'Sekretaris')->count(),
+            'Bendahara' => \App\Models\Dkm::where('jabatan', 'Bendahara')->count(),
+        ];
+
+        // Activity timeline
+        $activityTimeline = collect([
+            ['type' => 'kajian', 'title' => 'Kajian Baru Ditambahkan', 'time' => '2 jam lalu'],
+            ['type' => 'user', 'title' => 'User Baru Mendaftar', 'time' => '5 jam lalu'],
+            ['type' => 'donasi', 'title' => 'Donasi Masuk', 'time' => '1 hari lalu'],
+        ]);
+
+        // Recent kajian and donations
+        $recentKajian = \App\Models\Kajian::with(['ustadz'])->latest()->take(5)->get();
+        $recentDonations = \App\Models\Donasi::with(['user'])->latest()->take(5)->get();
+
+        // Growth percentages
+        $thisMonthUsers = \App\Models\User::whereMonth('created_at', now()->month)->count();
+        $lastMonthUsers = \App\Models\User::whereMonth('created_at', now()->subMonth()->month)->count();
+        $userGrowthPercentage = $lastMonthUsers > 0 ? (($thisMonthUsers - $lastMonthUsers) / $lastMonthUsers) * 100 : 0;
+
+        $thisMonthKajian = \App\Models\Kajian::whereMonth('created_at', now()->month)->count();
+        $lastMonthKajian = \App\Models\Kajian::whereMonth('created_at', now()->subMonth()->month)->count();
+        $kajianGrowthPercentage = $lastMonthKajian > 0 ? (($thisMonthKajian - $lastMonthKajian) / $lastMonthKajian) * 100 : 0;
+
+        return view('admin.dashboard-dropdown', compact(
+            'stats', 
+            'userGrowthData', 
+            'kajianCategories', 
+            'userRoles', 
+            'dkmStructure', 
+            'activityTimeline',
+            'recentKajian', 
+            'recentDonations',
+            'userGrowthPercentage',
+            'kajianGrowthPercentage'
+        ));
+    }
+
     private function masjidContactData(): array
     {
-        $ketua = Dkm::get()
-            ->sortBy(function ($member) {
-                return sprintf('%03d-%s', $this->dkmJabatanRank($member->jabatan), strtolower($member->nama ?? ''));
-            })
-            ->first();
+        // Cari Ketua DKM terlebih dahulu
+        $ketua = Dkm::where('jabatan', 'Ketua')->first();
+        
+        // Jika tidak ada Ketua, cari Wakil Ketua
+        if (!$ketua) {
+            $ketua = Dkm::where('jabatan', 'Wakil Ketua')->first();
+        }
+        
+        // Jika masih tidak ada, gunakan sorting logic
+        if (!$ketua) {
+            $ketua = Dkm::get()
+                ->sortBy(function ($member) {
+                    return sprintf('%03d-%s', $this->dkmJabatanRank($member->jabatan), strtolower($member->nama ?? ''));
+                })
+                ->first();
+        }
 
-        $address = 'Komplek Pushubad Cijantung Jl. Radar VII Kel. Kalisari, Kec. Pasar Rebo, Jakarta Timur 13790';
-        $phone = $ketua->no_hp ?? '081234567890';
+        $address = 'Masjid Al-Hasanah, Komplek Pushubad Cijantung Jl. Radar VII, Kel. Kalisari, Kec. Pasar Rebo, Jakarta Timur 13790';
+        $phone = $ketua->no_hp ?? '+6281934178960';
         $email = $ketua->email ?? 'info@masjidalhasanah.id';
 
+        // Jika Ketua tidak punya nomor HP, gunakan Sugeng Riyadi sebagai kontak
+        $contactName = 'Sugeng Riyadi';
+        $contactRole = 'Humas';
+        
+        // Tapi jika Ketua ada nomornya, gunakan nama Ketua
+        if ($ketua && $ketua->no_hp) {
+            $contactName = $ketua->nama;
+            $contactRole = $ketua->jabatan;
+        }
+
+        // Link Google Maps Masjid Al-Hasanah yang akurat
+        $masjidMapsUrl = 'https://maps.app.goo.gl/RBJaf2bFpCQsw7Vf7';
+        
         return [
             'address' => $address,
-            'mapsEmbed' => 'https://www.google.com/maps?q=' . urlencode($address) . '&output=embed',
+            'mapsEmbed' => 'https://www.google.com/maps?q=Masjid+Al-Hasanah+Cijantung+Jakarta+Timur&output=embed',
+            'mapsLink' => $masjidMapsUrl,
             'whatsapp' => $phone,
             'whatsappLink' => 'https://wa.me/' . $this->normalizeWhatsappNumber($phone),
             'email' => $email,
-            'contactName' => $ketua->nama ?? 'Pengurus Masjid',
-            'contactRole' => $ketua->jabatan ?? 'Ketua DKM',
+            'contactName' => $contactName,
+            'contactRole' => $contactRole,
         ];
     }
 
@@ -674,18 +1325,69 @@ class KajianController extends Controller
         return preg_replace('/\s+/', ' ', $normalized) ?? '';
     }
 
+    private function dkmSectionKeyForMember($member): string
+    {
+        $jabatan = $this->normalizeDkmJabatan($member->jabatan ?? null);
+        $group = $this->normalizeDkmJabatan($member->bio ?? null);
+
+        return match (true) {
+            in_array($jabatan, ['pelindung', 'penanggung jawab', 'penasehat', 'penasihat', 'ketua'], true) => 'pimpinan',
+            in_array($jabatan, ['wakil ketua', 'sekretaris', 'sekertaris', 'sekretaris umum', 'wakil sekretaris', 'bendahara', 'wakil bendahara'], true) => 'harian',
+            str_contains($group, 'keagamaan') || str_contains($group, 'ibadah') => 'ibadah',
+            in_array($jabatan, ['imam muqim', 'imam rawatib', 'imam besar', 'imam', 'khatib', 'muadzin', 'muazin'], true) => 'ibadah',
+            $group !== '' || str_starts_with($jabatan, 'seksi') || str_starts_with($jabatan, 'koordinator') || str_starts_with($jabatan, 'ketua bidang') => 'seksi',
+            default => $this->dkmSectionKey($member->jabatan ?? null),
+        };
+    }
+
+    private function dkmSectionOrderForMember($member): int
+    {
+        return match ($this->dkmSectionKeyForMember($member)) {
+            'pimpinan' => 1,
+            'harian' => 2,
+            'ibadah' => 3,
+            'seksi' => 4,
+            default => 5,
+        };
+    }
+
+    private function dkmCoordinatorLabel($member): string
+    {
+        $group = trim((string) ($member->bio ?? ''));
+
+        if ($group !== '') {
+            return $group;
+        }
+
+        return match ($this->dkmSectionKeyForMember($member)) {
+            'pimpinan' => 'Pimpinan & Pembina',
+            'harian' => 'Pengurus Harian',
+            'ibadah' => 'Pelayanan Ibadah',
+            'seksi' => 'Bidang Pelayanan',
+            default => 'Anggota Pendukung',
+        };
+    }
+
+    private function dkmSeksiLabel($member): string
+    {
+        $jabatan = trim((string) ($member->jabatan ?? ''));
+
+        return $jabatan !== '' ? $jabatan : 'Anggota';
+    }
+
     private function dkmJabatanRank(?string $jabatan): int
     {
         $normalized = $this->normalizeDkmJabatan($jabatan);
 
         return match (true) {
+            in_array($normalized, ['pelindung', 'penanggung jawab', 'penasehat', 'penasihat'], true) => 5,
             $normalized === 'ketua' => 10,
             $normalized === 'wakil ketua' => 20,
             in_array($normalized, ['sekretaris', 'sekertaris', 'sekretaris umum'], true) => 30,
             $normalized === 'wakil sekretaris' => 40,
             $normalized === 'bendahara' => 50,
             $normalized === 'wakil bendahara' => 60,
-            $normalized === 'imam rawatib' => 70,
+            in_array($normalized, ['imam muqim', 'imam rawatib'], true) => 70,
             $normalized === 'imam besar' => 80,
             $normalized === 'imam' => 90,
             $normalized === 'khatib' => 100,
@@ -782,6 +1484,11 @@ class KajianController extends Controller
         return view('tentang.index');
     }
 
+    public function visiMisi()
+    {
+        return view('visi-misi.index');
+    }
+
     public function donasi()
     {
         return view('donasi.index');
@@ -794,48 +1501,52 @@ class KajianController extends Controller
             'jenis' => 'required'
         ]);
 
-        // =========================
-        // SIMPAN KE DB
-        // =========================
         $donasi = Donasi::create([
             'user_id' => Auth::id(),
             'nominal' => $request->nominal,
             'jenis' => $request->jenis,
-            'status' => 'pending',
-            'metode' => 'midtrans'
+            'status' => 'pending', // 🔥 tetap pending
+            'metode' => 'qris'
         ]);
 
-        // =========================
-        // CONFIG MIDTRANS
-        // =========================
-        Config::$serverKey = 'YOUR_SERVER_KEY';
-        Config::$isProduction = false; // sandbox
-        Config::$isSanitized = true;
-        Config::$is3ds = true;
+        return redirect('/donasi/'.$donasi->id);
+    }
+    public function kas()
+    {
+        $kas = Kas::latest()->get();
 
-        // =========================
-        // DATA TRANSAKSI
-        // =========================
-        $params = [
-            'transaction_details' => [
-                'order_id' => 'DONASI-'.$donasi->id.'-'.time(),
-                'gross_amount' => $donasi->nominal,
-            ],
-            'customer_details' => [
-                'name' => Auth::user()->name,
-                'email' => Auth::user()->email,
-            ],
-        ];
+        $totalMasuk = Kas::where('tipe','masuk')->sum('nominal');
+        $totalKeluar = Kas::where('tipe','keluar')->sum('nominal');
 
-        // =========================
-        // SNAP TOKEN
-        // =========================
-        $snapToken = Snap::getSnapToken($params);
+        $saldo = $totalMasuk - $totalKeluar;
 
-        // =========================
-        // RETURN KE VIEW
-        // =========================
-        return view('donasi.payment', compact('snapToken'));
+        return view('kas.index', compact(
+            'kas',
+            'totalMasuk',
+            'totalKeluar',
+            'saldo'
+        ));
+    }
+
+    public function kasStore(Request $request)
+    {
+        $request->validate([
+            'keterangan' => 'required',
+            'nominal' => 'required|numeric',
+            'tipe' => 'required',
+            'tanggal' => 'required'
+        ]);
+
+        Kas::create($request->all());
+
+        return back()->with('success','Data kas ditambahkan');
+    }
+
+    public function donasiDetail($id)
+    {
+        $donasi = Donasi::findOrFail($id);
+
+        return view('donasi.qris', compact('donasi'));
     }
 
     public function donasiHistory()
@@ -846,4 +1557,5 @@ class KajianController extends Controller
 
         return view('donasi.history', compact('donasi'));
     }
-}
+
+    }

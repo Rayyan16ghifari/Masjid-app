@@ -211,7 +211,12 @@
 
             <label>Hari</label>
             <select name="hari">
-                <option>Jumat</option>
+                <option>Senin</option>
+                <option>Selasa</option>
+                <option>Rabu</option>
+                <option>Kamis</option>
+                <option>Jum'at</option>
+                <option>Sabtu</option>
                 <option>Minggu</option>
             </select>
 

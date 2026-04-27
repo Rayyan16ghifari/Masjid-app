@@ -8,7 +8,6 @@ class Kajian extends Model
 {
     protected $fillable = [
         'judul',
-        'kategori',
         'ustadz_id',
         'kitab_id',
         'hari',
@@ -16,8 +15,7 @@ class Kajian extends Model
         'waktu',
         'lokasi',
         'deskripsi',
-        'image',
-        'youtube_url'
+        'image'
     ];
 
     // Relasi ke ustadz
@@ -35,5 +33,10 @@ class Kajian extends Model
     public function ratings()
     {
         return $this->hasMany(\App\Models\Rating::class);
+    }
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ?: 'https://source.unsplash.com/400x300/?islamic,book';
     }
 }

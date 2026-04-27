@@ -1,4 +1,6 @@
-@extends('layouts.main')
+@extends('layouts.app')
+
+@section('title', 'Kontak - Hubungi Kami')
 
 @section('content')
 <style>
@@ -10,23 +12,24 @@
     font-family: 'Plus Jakarta Sans', sans-serif;
     position: relative;
     overflow: hidden;
-    border-radius: 28px;
     background:
         radial-gradient(circle at top left, rgba(29,158,117,0.12), transparent 24%),
         linear-gradient(180deg, #f6f9f7 0%, #eef4f1 100%);
     min-height: 100vh;
-    padding: 34px 30px 48px;
+    padding: 40px 0 60px;
+    width: 100%;
+    margin: 0;
 }
 
 .ct-shell {
-    max-width: 1160px;
-    margin: 0 auto;
+    width: 100%;
+    padding: 0 40px;
 }
 
 .ct-hero {
     border-radius: 28px;
-    padding: 32px;
-    margin-bottom: 24px;
+    padding: 40px;
+    margin-bottom: 32px;
     background:
         radial-gradient(circle at 100% 0%, rgba(255,215,0,0.16), transparent 22%),
         linear-gradient(135deg, #0b4c3d 0%, #0f6e56 48%, #1d9e75 100%);
@@ -74,8 +77,8 @@
 
 .ct-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-    gap: 22px;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
 }
 
 .ct-card {
@@ -86,7 +89,7 @@
 }
 
 .ct-card-body {
-    padding: 24px;
+    padding: 40px;
 }
 
 .ct-section-title {
@@ -241,7 +244,7 @@
                     <div class="ct-action-row">
                         <a href="{{ $contact['whatsappLink'] }}" target="_blank" rel="noreferrer" class="ct-btn ct-btn-primary">Chat WhatsApp</a>
                         <a href="mailto:{{ $contact['email'] }}" class="ct-btn ct-btn-secondary">Kirim Email</a>
-                        <a href="https://www.google.com/maps/search/?api=1&query={{ urlencode($contact['address']) }}" target="_blank" rel="noreferrer" class="ct-btn ct-btn-secondary">Buka Maps</a>
+                        <a href="{{ $contact['mapsLink'] }}" target="_blank" rel="noreferrer" class="ct-btn ct-btn-secondary">Buka Maps</a>
                     </div>
                 </div>
             </section>
